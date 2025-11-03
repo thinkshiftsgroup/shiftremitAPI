@@ -2,7 +2,7 @@ import sgMail from "@sendgrid/mail";
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY || "");
 
-const SENDER_EMAIL = process.env.EMAIL_FROM || "no-reply@dootling.com";
+const SENDER_EMAIL = process.env.EMAIL_FROM || "no-reply@shiftremit.com";
 
 interface SendEmailParams {
   to: string;
