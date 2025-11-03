@@ -30,8 +30,8 @@ export const signUp = async (req: Request, res: Response) => {
 
     res.status(201).json({
       message: "Registration successful. You are now logged in.",
-      user: user,
-      token: token,
+      // user: user,
+      // token: token,
     });
   } catch (error: any) {
     res.status(400).json({ message: error.message });
