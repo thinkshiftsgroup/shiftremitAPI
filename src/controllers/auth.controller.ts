@@ -8,9 +8,8 @@ const generateUniqueUsername = (fullName: string): string => {
 };
 
 export const signUp = async (req: Request, res: Response) => {
-  const { fullName, email, password } = req.body;
-
-  if (!fullName || !email || !password) {
+  const { firstname, lastname, email, password, phone } = req.body;
+  if (!firstname || !lastname || !email || !password) {
     return res.status(400).json({
       message:
         "All required fields are missing: Full Name, Email, and Password.",
@@ -18,13 +17,15 @@ export const signUp = async (req: Request, res: Response) => {
   }
 
   try {
-    const generatedUsername = generateUniqueUsername(fullName);
-
+    const fullNameForUsername = `${firstname} ${lastname}`;
+    const generatedUsername = generateUniqueUsername(fullNameForUsername);
     const { user, token } = await authService.registerUser(
-      fullName,
+      firstname,
+      lastname,
       email,
       generatedUsername,
-      password
+      password,
+      phone
     );
 
     res.status(201).json({
