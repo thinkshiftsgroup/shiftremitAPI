@@ -29,7 +29,7 @@ export const signUp = async (req: Request, res: Response) => {
     );
 
     res.status(201).json({
-      message: "Registration successful. You are now logged in.",
+      message: "Registration successful.",
       // user: user,
       // token: token,
     });
@@ -49,7 +49,7 @@ export const verifyEmail = async (req: Request, res: Response) => {
   try {
     const { user, token } = await authService.verifyEmail(email, code);
     res.status(200).json({
-      message: "Email successfully verified. You can now log in.",
+      message: "Email successfully verified.",
       user,
       token,
     });
