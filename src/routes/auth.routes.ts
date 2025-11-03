@@ -11,7 +11,7 @@ router.post(
   asyncHandler(authController.resendVerificationCode)
 );
 
-router.post("/signin", asyncHandler(authController.signIn));
+router.post("/login", asyncHandler(authController.signIn));
 router.post("/forgot-password", asyncHandler(authController.forgotPassword));
 router.post("/reset-password", asyncHandler(authController.resetPassword));
 
