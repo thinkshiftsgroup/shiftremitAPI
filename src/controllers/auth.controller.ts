@@ -37,6 +37,44 @@ export const signUp = async (req: Request, res: Response) => {
     res.status(400).json({ message: error.message });
   }
 };
+
+export const registerInternalUser = async (req: Request, res: Response) => {
+  const { firstname, lastname, email, password, userType, phone } = req.body;
+
+  if (!firstname || !lastname || !email || !password || !userType) {
+    return res.status(400).json({
+      message:
+        "All required fields are missing: First Name, Last Name, Email, Password, and User Type.",
+    });
+  }
+
+  if (userType !== "admin" && userType !== "partner") {
+    return res.status(400).json({
+      message: "Invalid userType specified. Must be 'admin' or 'partner'.",
+    });
+  }
+
+  try {
+    const fullNameForUsername = `${firstname} ${lastname}`;
+    const generatedUsername = generateUniqueUsername(fullNameForUsername);
+
+    const { user, token } = await authService.registerAdminOrPartner(
+      firstname,
+      lastname,
+      email,
+      generatedUsername,
+      password,
+      userType,
+      phone
+    );
+
+    res.status(201).json({
+      message: `${userType} registration successful and auto-verified.`,
+    });
+  } catch (error: any) {
+    res.status(400).json({ message: error.message });
+  }
+};
 export const verifyEmail = async (req: Request, res: Response) => {
   const { email, code } = req.body;
 

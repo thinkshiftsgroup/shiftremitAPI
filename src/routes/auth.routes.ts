@@ -5,6 +5,10 @@ import asyncHandler from "../utils/asyncHandler";
 const router = Router();
 
 router.post("/signup", asyncHandler(authController.signUp));
+router.post(
+  "/register-internal",
+  asyncHandler(authController.registerInternalUser)
+);
 router.post("/verify-email", asyncHandler(authController.verifyEmail));
 router.post(
   "/resend-verification",

@@ -151,9 +151,30 @@ export const fetchAggregatedFxRates = async (): Promise<AggregatedFxRates> => {
     nalaPromise,
   ]);
 
+  let filteredNalaRates: NalaRatesResponse | null = null;
+
+  if (nalaResult && nalaResult.data) {
+    const desiredCurrencies = new Set(["NGN", "GBP"]);
+
+    const filteredData = nalaResult.data.filter(
+      (rate) =>
+        desiredCurrencies.has(rate.source_currency) ||
+        desiredCurrencies.has(rate.destination_currency)
+    );
+
+    filteredNalaRates = {
+      ...nalaResult,
+      data: filteredData,
+      meta: {
+        ...nalaResult.meta,
+        total: filteredData.length,
+      },
+    };
+  }
+
   return {
     lemfiRate: lemfiResult,
     flutterwaveDetails: flutterwaveResult,
-    nalaRates: nalaResult,
+    nalaRates: filteredNalaRates,
   };
 };

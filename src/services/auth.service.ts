@@ -41,6 +41,7 @@ const generateAuthToken = (user: {
     { expiresIn: "7d" }
   );
 };
+
 export const registerUser = async (
   firstname: string,
   lastname: string,
@@ -72,7 +73,6 @@ export const registerUser = async (
       password: hashedPassword,
       verificationCode,
       verificationCodeExpires,
-
       userType: "user",
     },
   });
@@ -100,6 +100,72 @@ export const registerUser = async (
     verificationCode,
     newUser.fullName
   );
+
+  return { user: userWithBiodata, token };
+};
+
+export const registerAdminOrPartner = async (
+  firstname: string,
+  lastname: string,
+  email: string,
+  username: string,
+  password: string,
+  userType: "admin" | "partner",
+  phone?: string
+): Promise<{
+  user: Omit<User, "password"> & { biodata: Biodata | null };
+  token: string;
+}> => {
+  const existingUser = await prisma.user.findUnique({ where: { email } });
+  if (existingUser) {
+    throw new Error("User with this email already exists.");
+  }
+
+  if (userType !== "admin" && userType !== "partner") {
+    throw new Error(
+      "Invalid user type specified for this registration service."
+    );
+  }
+
+  const fullName = `${firstname.trim()} ${lastname.trim()}`.trim();
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const verificationCode = generateSixDigitCode();
+  const verificationCodeExpires = getExpiry(15);
+
+  const newUser = await prisma.user.create({
+    data: {
+      fullName,
+      email,
+      username,
+      firstname,
+      lastname,
+      password: hashedPassword,
+      verificationCode,
+      verificationCodeExpires,
+      userType: userType,
+      isVerified: true,
+    },
+  });
+
+  const token = generateAuthToken(newUser);
+
+  const { password: _, ...userWithoutPassword } = newUser;
+  const newBiodata = await prisma.biodata.create({
+    data: {
+      userId: newUser.id,
+      dateOfBirth: new Date(),
+      phone: phone,
+      headline: `${userType === "admin" ? "Administrator" : "Partner"}, ${
+        newUser.fullName || newUser.email
+      }, has been registered!`,
+    },
+  });
+
+  const userWithBiodata: UserWithBiodata = {
+    ...userWithoutPassword,
+    biodata: newBiodata,
+  };
 
   return { user: userWithBiodata, token };
 };
