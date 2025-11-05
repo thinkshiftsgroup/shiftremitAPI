@@ -5,7 +5,7 @@ import morgan from "morgan";
 import { errorHandler } from "@middlewares/error.middleware";
 
 import { authRouter } from "@routes/auth.routes";
-
+import { ratesRouter } from "@routes/fx-rates.route";
 const app = express();
 
 const allowedOrigins = [
@@ -29,6 +29,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/auth", authRouter);
+app.use("/api/rates", ratesRouter);
 
 app.get("/health", async (req: Request, res: Response) => {
   res.status(200).json({ status: "UP", message: "Service is healthy" });
