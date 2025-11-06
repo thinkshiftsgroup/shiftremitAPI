@@ -6,6 +6,7 @@ import { errorHandler } from "@middlewares/error.middleware";
 
 import { authRouter } from "@routes/auth.routes";
 import { ratesRouter } from "@routes/fx-rates.route";
+import { adminRatesRouter } from "@routes/admin/admin.rates.routes";
 const app = express();
 
 const allowedOrigins = [
@@ -30,6 +31,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/auth", authRouter);
 app.use("/api/rates", ratesRouter);
+app.use("/api/admin/rates", adminRatesRouter);
 
 app.get("/health", async (req: Request, res: Response) => {
   res.status(200).json({ status: "UP", message: "Service is healthy" });

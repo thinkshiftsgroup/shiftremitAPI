@@ -43,6 +43,13 @@ model Biodata {
   headline      String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model RatesData {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  benchmarkGBP  Float
+  rateNGN       Float
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
