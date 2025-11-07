@@ -65,6 +65,7 @@ model RateHistory {
 enum TransferStatus {
   PENDING
   PROCESSING
+  ABANDONED
   COMPLETED
   FAILED
   CANCELED
