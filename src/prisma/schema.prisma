@@ -74,6 +74,7 @@ model BankTransfer {
   id                          String           @id @default(auto()) @map("_id") @db.ObjectId
   userId                      String           @db.ObjectId
   amount                      Float
+  convertedNGNAmount          Float?
   fromCurrency                String
   toCurrency                  String
   recipientBankName           String

@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   getAllTransfers,
   patchTransferStatus,
+  adminDeleteAllTransfers,
 } from "@controllers/admin/admin.transfers.controller";
 import { adminProtect } from "@middlewares/auth.middleware";
 import asyncHandler from "@utils/asyncHandler";

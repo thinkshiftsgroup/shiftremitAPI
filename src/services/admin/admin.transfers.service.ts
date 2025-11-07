@@ -146,3 +146,8 @@ export const updateTransferStatus = async (
 
   return updatedTransfer;
 };
+
+export const deleteAllTransfers = async () => {
+  const result = await prisma.bankTransfer.deleteMany({});
+  return result;
+};

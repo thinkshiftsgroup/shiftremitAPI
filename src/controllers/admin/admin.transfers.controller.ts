@@ -3,6 +3,7 @@ import { TransferStatus } from "@prisma/client";
 import {
   fetchAllTransfers,
   updateTransferStatus,
+  deleteAllTransfers,
 } from "@services/admin/admin.transfers.service";
 
 const validStatuses: TransferStatus[] = [
@@ -73,6 +74,21 @@ export const patchTransferStatus = async (req: Request, res: Response) => {
     res.status(500).json({
       message: "Failed to update transfer status.",
       details: error.message,
+    });
+  }
+};
+
+export const adminDeleteAllTransfers = async (req: any, res: any) => {
+  try {
+    const { count } = await deleteAllTransfers();
+    res.status(200).json({
+      message: `Successfully deleted ${count} bank transfer records.`,
+      deletedCount: count,
+    });
+  } catch (error) {
+    console.error("Error deleting all transfers:", error);
+    res.status(500).json({
+      error: "An error occurred while attempting to delete all transfers.",
     });
   }
 };

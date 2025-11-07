@@ -108,6 +108,7 @@ export const createBankTransfer = async (
       amount: input.amount,
       fromCurrency: input.fromCurrency,
       toCurrency: input.toCurrency,
+      convertedNGNAmount: ngnEquivalent,
       recipientBankName: input.recipientBankName,
       recipientAccountNumber: input.recipientAccountNumber,
       recipientFullName: input.recipientFullName,
