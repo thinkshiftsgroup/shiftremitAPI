@@ -40,12 +40,33 @@ export const updateRates = async (data: {
 
   return updatedRates;
 };
+export const getRateHistory = async (
+  page: number,
+  pageSize: number
+): Promise<{
+  history: RateHistory[];
+  totalCount: number;
+  totalPages: number;
+}> => {
+  const validatedPage = Math.max(1, page);
+  const validatedPageSize = Math.max(1, pageSize);
 
-export const getRateHistory = async (): Promise<RateHistory[]> => {
+  const skip = (validatedPage - 1) * validatedPageSize;
+
+  const totalCount = await prisma.rateHistory.count();
+  const totalPages = Math.ceil(totalCount / validatedPageSize);
+
   const history = await prisma.rateHistory.findMany({
     orderBy: {
       recordedAt: "desc",
     },
+    skip: skip,
+    take: validatedPageSize,
   });
-  return history;
+
+  return {
+    history,
+    totalCount,
+    totalPages,
+  };
 };

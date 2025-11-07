@@ -60,11 +60,20 @@ export const getRateHistoryController = async (
   next: NextFunction
 ) => {
   try {
-    const history = await getRateHistory();
+    const page = parseInt(req.query.page as string) || 1;
+    const pageSize = parseInt(req.query.pageSize as string) || 10;
+
+    const paginatedResult = await getRateHistory(page, pageSize);
 
     res.status(200).json({
       success: true,
-      data: history,
+      data: paginatedResult.history,
+      meta: {
+        page: page,
+        pageSize: pageSize,
+        totalCount: paginatedResult.totalCount,
+        totalPages: paginatedResult.totalPages,
+      },
     });
   } catch (error) {
     next(error);
