@@ -3,6 +3,7 @@ import sgMail from "@sendgrid/mail";
 sgMail.setApiKey(process.env.SENDGRID_API_KEY || "");
 
 const SENDER_EMAIL = process.env.EMAIL_FROM || "no-reply@shiftremit.com";
+const TRANSFER_EMAIL = process.env.EMAIL_FROM || "support@selfany.com";
 
 interface SendEmailParams {
   to: string;
@@ -36,6 +37,31 @@ export const sendEmail = async ({
   }
 };
 
+export const sendTransferEmail = async ({
+  to,
+  subject,
+  htmlBody,
+}: SendEmailParams): Promise<void> => {
+  const msg = {
+    to: to,
+    from: TRANSFER_EMAIL,
+    subject: subject,
+    html: htmlBody,
+  };
+
+  try {
+    const [response] = await sgMail.send(msg);
+    console.log(
+      `Email sent to ${to}: ${subject}. Status: ${response.statusCode}`
+    );
+  } catch (error: any) {
+    console.error(
+      "Error sending email via SendGrid:",
+      error.response?.body || error
+    );
+    throw new Error("Failed to send email.");
+  }
+};
 export const sendVerificationCodeEmail = async (
   email: string,
   code: string,

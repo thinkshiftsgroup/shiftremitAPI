@@ -8,6 +8,8 @@ import { authRouter } from "@routes/auth.routes";
 import { ratesRouter } from "@routes/fx-rates.route";
 import { adminRatesRouter } from "@routes/admin/admin.rates.routes";
 import { verificationRouter } from "@routes/verification.route";
+import { bankTransferRouter } from "@routes/banktransfer.route";
+import { adminTransferAccountRouter } from "@routes/admin/admin.transferaccount.route";
 const app = express();
 
 const allowedOrigins = [
@@ -33,8 +35,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/auth", authRouter);
 app.use("/api/rates", ratesRouter);
 app.use("/api/verification", verificationRouter);
+app.use("/api/bank-transfer", bankTransferRouter);
 
 app.use("/api/admin/rates", adminRatesRouter);
+app.use("/api/admin/transfer-account", adminTransferAccountRouter);
 
 app.get("/health", async (req: Request, res: Response) => {
   res.status(200).json({ status: "UP", message: "Service is healthy" });
