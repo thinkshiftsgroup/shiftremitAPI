@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import {
   getOrCreateRates,
   updateRates,
+  getRateHistory,
 } from "@services/admin/admin.rates.service";
 
 interface UpdateRatesRequestBody {
@@ -47,6 +48,23 @@ export const updateCurrentRates = async (
       success: true,
       message: "Rates updated successfully.",
       data: updatedRates,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getRateHistoryController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const history = await getRateHistory();
+
+    res.status(200).json({
+      success: true,
+      data: history,
     });
   } catch (error) {
     next(error);
