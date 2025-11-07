@@ -7,6 +7,7 @@ import { errorHandler } from "@middlewares/error.middleware";
 import { authRouter } from "@routes/auth.routes";
 import { ratesRouter } from "@routes/fx-rates.route";
 import { adminRatesRouter } from "@routes/admin/admin.rates.routes";
+import { verificationRouter } from "@routes/verification.route";
 const app = express();
 
 const allowedOrigins = [
@@ -31,6 +32,8 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/auth", authRouter);
 app.use("/api/rates", ratesRouter);
+app.use("/api/verification", verificationRouter);
+
 app.use("/api/admin/rates", adminRatesRouter);
 
 app.get("/health", async (req: Request, res: Response) => {
