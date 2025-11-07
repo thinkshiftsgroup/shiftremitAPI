@@ -2,6 +2,7 @@ import prisma from "@config/db";
 import { BankTransfer } from "@prisma/client";
 import { sendTransferEmail } from "@utils/email";
 import { generateTransferReference, getLatestRates } from "@utils/helpers";
+
 const ADMIN_EMAIL = "thinkshifts@gmail.com";
 
 interface BankTransferInput {
@@ -39,10 +40,8 @@ const generateAdminEmailHtml = (
         <p><strong>Amount Received in GBP:</strong> &pound;${transfer.amount.toFixed(
           2
         )}</p>
-        <p><strong>Benchmark NGN Rate:</strong> &#8358;${benchmarkNgnRate.toFixed(
-          2
-        )}</p>
-        <p><strong>Customer Rate Used:</strong> &pound;1 = &#8358;${effectiveRate.toFixed(
+        
+        <p><strong>Exchange Rate Used:</strong> &pound;1 = &#8358;${effectiveRate.toFixed(
           2
         )}</p>
         <p><strong>Equivalent Amount in NGN:</strong> &#8358;${ngnEquivalent.toLocaleString(
@@ -69,7 +68,7 @@ const generateAdminEmailHtml = (
       <hr style="margin: 20px 0;">
       
       <p><strong>Instruction:</strong></p>
-      <p>Retain our markup of <strong>&#8358;${markup.toFixed(
+      <p>Retain our markup of <strong>&#8358;${benchmarkNgnRate.toFixed(
         2
       )} per &pound;</strong></p>
       <p>Please send INSTANT confirmation once the Naira transfer has been successfully completed.</p>
