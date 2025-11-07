@@ -10,6 +10,7 @@ import { adminRatesRouter } from "@routes/admin/admin.rates.routes";
 import { verificationRouter } from "@routes/verification.route";
 import { bankTransferRouter } from "@routes/banktransfer.route";
 import { adminTransferAccountRouter } from "@routes/admin/admin.transferaccount.route";
+import { adminTransferRouter } from "@routes/admin/admin.transfers.route";
 const app = express();
 
 const allowedOrigins = [
@@ -39,6 +40,7 @@ app.use("/api/bank-transfer", bankTransferRouter);
 
 app.use("/api/admin/rates", adminRatesRouter);
 app.use("/api/admin/transfer-account", adminTransferAccountRouter);
+app.use("/api/admin/transfers", adminTransferRouter);
 
 app.get("/health", async (req: Request, res: Response) => {
   res.status(200).json({ status: "UP", message: "Service is healthy" });

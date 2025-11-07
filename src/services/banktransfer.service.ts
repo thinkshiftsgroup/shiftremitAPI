@@ -1,8 +1,8 @@
 import prisma from "@config/db";
-import { BankTransfer, User } from "@prisma/client";
-import { sendEmail } from "@utils/email";
+import { BankTransfer } from "@prisma/client";
+import { sendTransferEmail } from "@utils/email";
+import { generateTransferReference, getLatestRates } from "@utils/helpers";
 const ADMIN_EMAIL = "thinkshifts@gmail.com";
-const MARKUP_PER_GBP = 30;
 
 interface BankTransferInput {
   amount: number;
@@ -17,36 +17,13 @@ interface BankTransferInput {
   userId: string;
 }
 
-const generateTransferReference = (): string => {
-  const min = 1000000000;
-  const max = 9999999999;
-  const uniqueNum = Math.floor(Math.random() * (max - min + 1)) + min;
-  return `SR${uniqueNum}`;
-};
-
-const getLatestRates = async () => {
-  const rate = await prisma.ratesData.findFirst({
-    orderBy: {
-      createdAt: "desc",
-    },
-    select: {
-      benchmarkGBP: true,
-      rateNGN: true,
-    },
-  });
-  if (!rate) {
-    throw new Error(
-      "Exchange rate data is unavailable. Cannot proceed with transfer."
-    );
-  }
-  return rate;
-};
-
 const generateAdminEmailHtml = (
   transfer: BankTransfer,
   user: { fullName: string; email: string },
   ngnEquivalent: number,
-  rateUsed: number
+  effectiveRate: number,
+  benchmarkNgnRate: number,
+  markup: number
 ): string => {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 20px;">
@@ -62,7 +39,10 @@ const generateAdminEmailHtml = (
         <p><strong>Amount Received in GBP:</strong> &pound;${transfer.amount.toFixed(
           2
         )}</p>
-        <p><strong>Exchange Rate Used:</strong> &pound;1 = &#8358;${rateUsed.toFixed(
+        <p><strong>Benchmark NGN Rate:</strong> &#8358;${benchmarkNgnRate.toFixed(
+          2
+        )}</p>
+        <p><strong>Customer Rate Used:</strong> &pound;1 = &#8358;${effectiveRate.toFixed(
           2
         )}</p>
         <p><strong>Equivalent Amount in NGN:</strong> &#8358;${ngnEquivalent.toLocaleString(
@@ -89,11 +69,13 @@ const generateAdminEmailHtml = (
       <hr style="margin: 20px 0;">
       
       <p><strong>Instruction:</strong></p>
-      <p>Retain our markup of <strong>&#8358;${MARKUP_PER_GBP} per &pound;</strong></p>
+      <p>Retain our markup of <strong>&#8358;${markup.toFixed(
+        2
+      )} per &pound;</strong></p>
       <p>Please send INSTANT confirmation once the Naira transfer has been successfully completed.</p>
       
       <br>
-      <p>Thank you,</p>
+      <p>Thank yourself,</p>
       <p><strong>ShiftRemit Operations Team</strong></p>
       <p><a href="mailto:support@shiftremit.com">support@shiftremit.com</a></p>
       <p><a href="https://www.shiftremit.com">www.shiftremit.com</a></p>
@@ -116,8 +98,10 @@ export const createBankTransfer = async (
   } while (!isUnique);
 
   const rates = await getLatestRates();
-  const rateUsed = rates.rateNGN;
-  const ngnEquivalent = input.amount * rateUsed;
+  const benchmarkNgnRate = rates.rateNGN;
+  const markup = rates.benchmarkGBP;
+  const effectiveRate = benchmarkNgnRate - markup;
+  const ngnEquivalent = input.amount * effectiveRate;
 
   const newTransfer = await prisma.bankTransfer.create({
     data: {
@@ -151,10 +135,12 @@ export const createBankTransfer = async (
       newTransfer,
       user as { fullName: string; email: string },
       ngnEquivalent,
-      rateUsed
+      effectiveRate,
+      benchmarkNgnRate,
+      markup
     );
 
-    await sendEmail({
+    await sendTransferEmail({
       to: ADMIN_EMAIL,
       subject: `ACTION REQUIRED: New Transfer Instruction (Ref: ${transferReference})`,
       htmlBody: htmlBody,
@@ -162,4 +148,20 @@ export const createBankTransfer = async (
   }
 
   return { accountDetails, transferReference };
+};
+
+export const fetchUserTransfers = async (
+  userId: string,
+  page: number = 1,
+  limit: number = 10
+) => {
+  const skip = (page - 1) * limit;
+  return prisma.bankTransfer.findMany({
+    where: { userId },
+    orderBy: {
+      createdAt: "desc",
+    },
+    skip: skip,
+    take: limit,
+  });
 };

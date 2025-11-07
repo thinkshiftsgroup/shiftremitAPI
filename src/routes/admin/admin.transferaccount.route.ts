@@ -7,6 +7,7 @@ import asyncHandler from "@utils/asyncHandler";
 import { adminProtect } from "@middlewares/auth.middleware";
 const router = Router();
 
+router.use(adminProtect);
 router.get("/", getAccountData);
 
 router.patch("/", asyncHandler(updateAccountData));

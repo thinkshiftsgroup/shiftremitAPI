@@ -1,5 +1,8 @@
 import { Request, Response } from "express";
-import { createBankTransfer } from "@services/banktransfer.service";
+import {
+  createBankTransfer,
+  fetchUserTransfers,
+} from "@services/banktransfer.service";
 
 interface TransferRequestBody {
   amount: number;
@@ -75,6 +78,42 @@ export const requestBankTransfer = async (req: Request, res: Response) => {
     console.error("Error creating bank transfer:", error.message);
     res.status(500).json({
       message: "Failed to process transfer request.",
+      details: error.message,
+    });
+  }
+};
+
+export const getUserTransfers = async (req: Request, res: Response) => {
+  const userId = (req as any).user.id;
+
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 10;
+
+  if (!userId) {
+    return res.status(401).json({ message: "Authentication required." });
+  }
+  if (page < 1 || limit < 1 || limit > 100) {
+    return res.status(400).json({
+      message:
+        "Invalid pagination parameters. Page must be >= 1 and Limit must be between 1 and 100.",
+    });
+  }
+
+  try {
+    const transfers = await fetchUserTransfers(userId, page, limit);
+    res.status(200).json({
+      message: "User transaction history retrieved successfully.",
+      transfers,
+      meta: {
+        page,
+        limit,
+        totalTransfers: transfers.length,
+      },
+    });
+  } catch (error: any) {
+    console.error("Error fetching user transfers:", error.message);
+    res.status(500).json({
+      message: "Failed to fetch user transfers.",
       details: error.message,
     });
   }
