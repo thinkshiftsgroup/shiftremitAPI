@@ -7,6 +7,7 @@ const ADMIN_EMAIL = "thinkshifts@gmail.com";
 
 interface BankTransferInput {
   amount: number;
+  convertedNGNAmount?: number;
   fromCurrency: string;
   toCurrency: string;
   recipientBankName: string;
@@ -100,7 +101,8 @@ export const createBankTransfer = async (
   const benchmarkNgnRate = rates.rateNGN;
   const markup = rates.benchmarkGBP;
   const effectiveRate = benchmarkNgnRate - markup;
-  const ngnEquivalent = input.amount * effectiveRate;
+  const ngnEquivalent =
+    input.convertedNGNAmount || input.amount * effectiveRate;
 
   const newTransfer = await prisma.bankTransfer.create({
     data: {
@@ -108,7 +110,7 @@ export const createBankTransfer = async (
       amount: input.amount,
       fromCurrency: input.fromCurrency,
       toCurrency: input.toCurrency,
-      convertedNGNAmount: ngnEquivalent,
+      convertedNGNAmount: input.convertedNGNAmount,
       recipientBankName: input.recipientBankName,
       recipientAccountNumber: input.recipientAccountNumber,
       recipientFullName: input.recipientFullName,
