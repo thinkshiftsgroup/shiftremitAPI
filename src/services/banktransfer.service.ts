@@ -3,7 +3,7 @@ import { BankTransfer } from "@prisma/client";
 import { sendTransferEmail } from "@utils/email";
 import { generateTransferReference, getLatestRates } from "@utils/helpers";
 
-const ADMIN_EMAIL = "thinkshifts@gmail.com";
+const ADMIN_EMAIL = "finance@shiftremit.com";
 
 interface BankTransferInput {
   amount: number;
