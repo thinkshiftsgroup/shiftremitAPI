@@ -11,6 +11,8 @@ const validStatuses: TransferStatus[] = [
   "PENDING",
   "PROCESSING",
   "COMPLETED",
+  "ABANDONED",
+  "REJECTED",
   "FAILED",
   "CANCELED",
 ];
@@ -25,9 +27,15 @@ export const getAllTransfers = async (req: Request, res: Response) => {
     | undefined;
 
   const rawCurrency = req.query.currency as string | undefined;
+  const rawStatus = req.query.status as string | undefined;
 
   const currency: "GBP" | "NGN" | undefined =
     rawCurrency === "GBP" || rawCurrency === "NGN" ? rawCurrency : undefined;
+
+  const status: TransferStatus | undefined =
+    rawStatus && validStatuses.includes(rawStatus as TransferStatus)
+      ? (rawStatus as TransferStatus)
+      : undefined;
 
   if (page < 1 || limit < 1 || limit > 100) {
     return res.status(400).json({
@@ -41,6 +49,7 @@ export const getAllTransfers = async (req: Request, res: Response) => {
     endDate,
     transactionReference,
     currency,
+    status,
   };
 
   try {

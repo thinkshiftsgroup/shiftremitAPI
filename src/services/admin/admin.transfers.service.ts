@@ -101,6 +101,7 @@ interface DashboardData {
     totalAbandoned: number;
     totalPending: number;
     totalFailed: number;
+    totalRejected: number;
     totalCanceled: number;
     totalProcessing: number;
   };
@@ -120,6 +121,7 @@ interface FilterOptions {
   endDate?: string;
   transactionReference?: string;
   currency?: "GBP" | "NGN";
+  status?: TransferStatus;
 }
 
 export const fetchDashboardData = async (
@@ -127,7 +129,8 @@ export const fetchDashboardData = async (
   limit: number = 10,
   filters: FilterOptions = {}
 ): Promise<DashboardData> => {
-  const { startDate, endDate, transactionReference, currency } = filters;
+  const { startDate, endDate, transactionReference, currency, status } =
+    filters;
   const skip = (page - 1) * limit;
 
   const where: any = {};
@@ -150,6 +153,10 @@ export const fetchDashboardData = async (
     where.fromCurrency = "GBP";
   } else if (currency === "NGN") {
     where.toCurrency = "NGN";
+  }
+  // NEW: Add status filter to the where clause
+  if (status) {
+    where.status = status;
   }
 
   const allMatchingTransfers = await prisma.bankTransfer.findMany({
@@ -175,6 +182,9 @@ export const fetchDashboardData = async (
         case TransferStatus.PENDING:
           acc.totalPending += 1;
           break;
+        case TransferStatus.REJECTED:
+          acc.totalRejected += 1; // FIX: Corrected the typo/logic from original to match enum name
+          break;
         case TransferStatus.FAILED:
           acc.totalFailed += 1;
           break;
@@ -194,6 +204,7 @@ export const fetchDashboardData = async (
       totalAbandoned: 0,
       totalPending: 0,
       totalFailed: 0,
+      totalRejected: 0,
       totalCanceled: 0,
       totalProcessing: 0,
     }
