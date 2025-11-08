@@ -86,6 +86,166 @@ export const fetchAllTransfers = async (
   });
 };
 
+interface DashboardData {
+  transfers: (BankTransfer & {
+    user: {
+      username: string;
+      fullName: string;
+      email: string;
+      profilePhotoUrl: string | null;
+    };
+  })[];
+  kpis: {
+    totalTransactions: number;
+    totalCompleted: number;
+    totalAbandoned: number;
+    totalPending: number;
+    totalFailed: number;
+    totalCanceled: number;
+    totalProcessing: number;
+  };
+  totals: {
+    totalAmountGBP: number;
+    totalAmountNGN: number;
+  };
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+  };
+}
+
+interface FilterOptions {
+  startDate?: string;
+  endDate?: string;
+  transactionReference?: string;
+  currency?: "GBP" | "NGN";
+}
+
+export const fetchDashboardData = async (
+  page: number = 1,
+  limit: number = 10,
+  filters: FilterOptions = {}
+): Promise<DashboardData> => {
+  const { startDate, endDate, transactionReference, currency } = filters;
+  const skip = (page - 1) * limit;
+
+  const where: any = {};
+
+  if (startDate) {
+    where.createdAt = { ...where.createdAt, gte: new Date(startDate) };
+  }
+
+  if (endDate) {
+    const adjustedEndDate = new Date(endDate);
+    adjustedEndDate.setDate(adjustedEndDate.getDate() + 1);
+    where.createdAt = { ...where.createdAt, lt: adjustedEndDate };
+  }
+
+  if (transactionReference) {
+    where.transferReference = transactionReference;
+  }
+
+  if (currency === "GBP") {
+    where.fromCurrency = "GBP";
+  } else if (currency === "NGN") {
+    where.toCurrency = "NGN";
+  }
+
+  const allMatchingTransfers = await prisma.bankTransfer.findMany({
+    where: where,
+    select: {
+      status: true,
+      amount: true,
+      convertedNGNAmount: true,
+    },
+  });
+
+  const kpis = allMatchingTransfers.reduce(
+    (acc, transfer) => {
+      acc.totalTransactions += 1;
+
+      switch (transfer.status) {
+        case TransferStatus.COMPLETED:
+          acc.totalCompleted += 1;
+          break;
+        case TransferStatus.ABANDONED:
+          acc.totalAbandoned += 1;
+          break;
+        case TransferStatus.PENDING:
+          acc.totalPending += 1;
+          break;
+        case TransferStatus.FAILED:
+          acc.totalFailed += 1;
+          break;
+        case TransferStatus.CANCELED:
+          acc.totalCanceled += 1;
+          break;
+        case TransferStatus.PROCESSING:
+          acc.totalProcessing += 1;
+          break;
+      }
+
+      return acc;
+    },
+    {
+      totalTransactions: 0,
+      totalCompleted: 0,
+      totalAbandoned: 0,
+      totalPending: 0,
+      totalFailed: 0,
+      totalCanceled: 0,
+      totalProcessing: 0,
+    }
+  );
+
+  const totals = allMatchingTransfers.reduce(
+    (acc, transfer) => {
+      acc.totalAmountGBP += transfer.amount;
+
+      acc.totalAmountNGN += transfer.convertedNGNAmount || 0;
+
+      return acc;
+    },
+    {
+      totalAmountGBP: 0,
+      totalAmountNGN: 0,
+    }
+  );
+
+  const totalItems = kpis.totalTransactions;
+  const totalPages = Math.ceil(totalItems / limit);
+
+  const transfers = await prisma.bankTransfer.findMany({
+    where: where,
+    orderBy: {
+      createdAt: "desc",
+    },
+    include: {
+      user: {
+        select: {
+          username: true,
+          fullName: true,
+          email: true,
+          profilePhotoUrl: true,
+        },
+      },
+    },
+    skip: skip,
+    take: limit,
+  });
+
+  return {
+    transfers,
+    kpis,
+    totals,
+    pagination: {
+      currentPage: page,
+      totalPages: totalPages,
+      totalItems: totalItems,
+    },
+  };
+};
 export const updateTransferStatus = async (
   transferId: string,
   newStatus: TransferStatus
