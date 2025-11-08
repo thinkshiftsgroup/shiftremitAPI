@@ -85,16 +85,18 @@ export const fetchAllTransfers = async (
     take: limit,
   });
 };
+interface TransferWithPdf extends BankTransfer {
+  pdfFile: string;
+  user: {
+    username: string;
+    fullName: string;
+    email: string;
+    profilePhotoUrl: string | null;
+  };
+}
 
 interface DashboardData {
-  transfers: (BankTransfer & {
-    user: {
-      username: string;
-      fullName: string;
-      email: string;
-      profilePhotoUrl: string | null;
-    };
-  })[];
+  transfers: TransferWithPdf[];
   kpis: {
     totalTransactions: number;
     totalCompleted: number;
@@ -154,7 +156,6 @@ export const fetchDashboardData = async (
   } else if (currency === "NGN") {
     where.toCurrency = "NGN";
   }
-  // NEW: Add status filter to the where clause
   if (status) {
     where.status = status;
   }
@@ -183,7 +184,7 @@ export const fetchDashboardData = async (
           acc.totalPending += 1;
           break;
         case TransferStatus.REJECTED:
-          acc.totalRejected += 1; // FIX: Corrected the typo/logic from original to match enum name
+          acc.totalRejected += 1;
           break;
         case TransferStatus.FAILED:
           acc.totalFailed += 1;
@@ -227,7 +228,7 @@ export const fetchDashboardData = async (
   const totalItems = kpis.totalTransactions;
   const totalPages = Math.ceil(totalItems / limit);
 
-  const transfers = await prisma.bankTransfer.findMany({
+  const rawTransfers = await prisma.bankTransfer.findMany({
     where: where,
     orderBy: {
       createdAt: "desc",
@@ -245,6 +246,11 @@ export const fetchDashboardData = async (
     skip: skip,
     take: limit,
   });
+
+  const transfers = rawTransfers.map((transfer) => ({
+    ...transfer,
+    pdfFile: (transfer as any).pdfFile || "",
+  })) as TransferWithPdf[];
 
   return {
     transfers,

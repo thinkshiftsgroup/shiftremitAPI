@@ -84,6 +84,7 @@ model BankTransfer {
   recipientFullName           String
   recipientEmail              String
   purpose                     String
+  pdfFile                     String?
   isRecipientBusinessAccount  Boolean
   transferReference           String           @unique
   status                      TransferStatus   @default(PENDING)
