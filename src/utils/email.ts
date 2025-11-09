@@ -3,7 +3,7 @@ import sgMail from "@sendgrid/mail";
 sgMail.setApiKey(process.env.SENDGRID_API_KEY || "");
 
 const SENDER_EMAIL = process.env.EMAIL_FROM || "no-reply@shiftremit.com";
-const TRANSFER_EMAIL = process.env.EMAIL_FROM || "support@selfany.com";
+const TRANSFER_EMAIL = process.env.EMAIL_FROM || "support@shiftremit.com";
 
 interface SendEmailParams {
   to: string;

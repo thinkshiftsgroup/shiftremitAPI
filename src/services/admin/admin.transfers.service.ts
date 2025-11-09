@@ -3,33 +3,163 @@ import { TransferStatus, BankTransfer } from "@prisma/client";
 import { sendTransferEmail } from "@utils/email";
 import { getLatestRates } from "@utils/helpers";
 
+export const generateEmailHeader = (): string => {
+  const logoUrl =
+    "https://shiftremit.com/_next/image?url=%2Fimages%2Fshiftremit-logo.png&w=128&q=75";
+
+  return `
+    <div style="padding: 20px 0;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <a href="YOUR_WEBSITE_URL" target="_blank" style="text-decoration: none;">
+          <img
+            src="${logoUrl}"
+            alt="ShiftRemit Logo"
+            width="40"
+            height="40"
+            style="width: 40px; height: 40px; object-fit: cover; cursor: pointer; border: 0;"
+          />
+        </a>
+        <div>
+          <h1 style="font-size: 24px; font-weight: bold; color: #1f2937; margin: 0; line-height: 1.2;">
+            Shift<span style="color: #813FD6;">Remit</span>
+          </h1>
+          <p style="font-size: 12px; font-weight: normal; color: #4b5563; margin: 0; line-height: 1.2;">
+            Unbeatable Transfer Rates
+          </p>
+        </div>
+      </div>
+    </div>
+  `;
+};
+
+export const generateEmailFooter = (): string => {
+  return `
+    <div style="border-top: 1px solid #e5e7eb; padding-top: 24px; margin-top: 32px; color: #6b7280; font-size: 12px;">
+      <div style="margin-bottom: 8px;">
+        <a href="mailto:support@shiftremit.com" style="color: #813FD6; text-decoration: none; font-size: 14px;">
+          📧 support@shiftremit.com
+        </a>
+      </div>
+      <div style="margin-bottom: 16px;">
+        <a href="YOUR_WEBSITE_URL" target="_blank" style="color: #813FD6; text-decoration: none; font-size: 14px;">
+          🌐 www.shiftremit.com
+        </a>
+      </div>
+
+      <p style="margin: 0 0 4px 0;">© 2024 - 2025 ShiftRemit Limited. All Rights Reserved.</p>
+      <p style="margin: 0 0 4px 0;">
+        <a href="" target="_blank" style="color: #6b7280; text-decoration: underline;">
+          Privacy Policy
+        </a>
+        ·
+        <a href="" target="_blank" style="color: #6b7280; text-decoration: underline;">
+          Terms of Use
+        </a>
+        · 
+        <a href="=" target="_blank" style="color: #6b7280; text-decoration: underline;">
+          Payouts
+        </a>
+      </p>
+      <p style="margin: 0;">
+        Follow us on 
+        <a href="" target="_blank" style="color: #6b7280; text-decoration: underline;">
+          Instagram
+        </a>,
+        <a href="" target="_blank" style="color: #6b7280; text-decoration: underline;">
+          Youtube
+        </a>,
+        <a href="" target="_blank" style="color: #6b7280; text-decoration: underline;">
+          LinkedIn
+        </a>,
+        <a href="" target="_blank" style="color: #6b7280; text-decoration: underline;">
+          Facebook
+        </a>,
+        <a href="YOUR_SOCIAL_TWITTER_URL" target="_blank" style="color: #6b7280; text-decoration: underline;">
+          Twitter (X)
+        </a>,
+        <a href="YOUR_SOCIAL_TIKTOK_URL" target="_blank" style="color: #6b7280; text-decoration: underline;">
+          TikTok
+        </a>
+      </p>
+    </div>
+  `;
+};
+
 const generateSenderConfirmationEmailHtml = (
   transfer: BankTransfer,
   ngnEquivalent: number
 ): string => {
+  const headerHtml = generateEmailHeader();
+  const footerHtml = generateEmailFooter();
+
+  const rate = ngnEquivalent / transfer.amount;
+
   return `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #00AA44; padding: 20px;">
-      <h2 style="color: #00AA44;">Transfer Successful! 🎉</h2>
-      
-      <p>Hello ${transfer.recipientFullName},</p>
-      <p>Your transfer instruction with reference <strong>${
-        transfer.transferReference
-      }</strong> has been successfully processed and the funds have been sent to the recipient.</p>
-      
-      <div style="background-color: #f0f0f0; padding: 15px; margin-bottom: 20px; border-radius: 5px;">
-        <p><strong>Recipient Bank Name:</strong> ${
-          transfer.recipientBankName
-        }</p>
-        <p><strong>Recipient Account:</strong> ${
-          transfer.recipientAccountNumber
-        }</p>
-        <p><strong>Amount Credited (NGN):</strong> &#8358;${ngnEquivalent.toLocaleString(
-          "en-NG",
-          { maximumFractionDigits: 2 }
-        )}</p>
+    <div style="background-color: #f3f4f6; padding: 20px; min-height: 100vh;">
+      <div style="max-width: 600px; margin: auto; background-color: #ffffff; color: #1f2937; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); overflow: hidden;">
+        
+        <div style="padding: 0 24px; border-bottom: 1px solid #e5e7eb;">
+          ${headerHtml}
+        </div>
+        
+        <div style="padding: 24px 24px 0 24px;">
+          <p style="color: #374151; font-size: 16px; margin-top: 8px;">Dear ${
+            transfer.recipientFullName
+          },</p>
+          <p style="color: #4b5563; font-size: 16px; margin-top: 16px;">
+            This is to confirm that the transfer instruction with 
+            <strong style="font-weight: 600;">Reference: ${
+              transfer.transferReference
+            }</strong> has been 
+            <strong style="font-weight: 700; color: #10b981;">successfully processed</strong> 
+            and disbursed to the recipient.
+          </p>
+        </div>
+
+        <div style="padding: 24px;">
+          <h2 style="font-size: 20px; font-weight: bold; color: #1f2937; margin-bottom: 16px;">
+            Transfer Overview
+          </h2>
+          
+          <div style="background-color: #f7f3ff; padding: 16px; margin-bottom: 32px; border-radius: 6px;">
+            <p style="margin: 0 0 4px 0; font-size: 14px;"><strong>Transfer Reference:</strong> ${
+              transfer.transferReference
+            }</p>
+            <p style="margin: 4px 0; font-size: 14px;"><strong>Amount Sent (${
+              transfer.fromCurrency
+            }):</strong> ${
+    transfer.fromCurrency === "GBP" ? "£" : ""
+  }${transfer.amount.toLocaleString("en-US", { maximumFractionDigits: 2 })}</p>
+            <p style="margin: 4px 0; font-size: 14px;"><strong>Equivalent Amount (NGN):</strong> &#8358;${ngnEquivalent.toLocaleString(
+              "en-NG",
+              { maximumFractionDigits: 2 }
+            )}</p>
+            <p style="margin: 4px 0; font-size: 14px;"><strong>Exchange Rate Used:</strong> 1 ${
+              transfer.fromCurrency
+            } = &#8358;${rate.toLocaleString("en-NG", {
+    maximumFractionDigits: 2,
+  })}</p>
+            <p style="margin: 4px 0; font-size: 14px;"><strong>Recipient:</strong> ${
+              transfer.recipientFullName
+            } </p>
+            <p style="margin: 4px 0; font-size: 14px;"><strong>Recipient Account:</strong>
+            ${transfer.recipientBankName} (${
+    transfer.recipientAccountNumber
+  })</p>
+            <p style="margin: 4px 0 0 0; font-size: 14px;"><strong>Processed Date:</strong> ${new Date()
+              .toISOString()
+              .slice(0, 19)
+              .replace("T", " ")}</p>
+          </div>
+
+          <p style="color: #4b5563; font-size: 14px; margin-bottom: 4px;">Thank you,</p>
+          <p style="color: #4b5563; font-weight: 600; font-size: 14px; margin-top: 0;">
+            ShiftRemit Operations Team
+          </p>
+
+          ${footerHtml}
+        </div>
       </div>
-      
-      <p>Thank you for choosing ShiftRemit.</p>
     </div>
   `;
 };
@@ -39,25 +169,55 @@ const generateRecipientNotificationEmailHtml = (
   senderName: string,
   ngnEquivalent: number
 ): string => {
+  const headerHtml = generateEmailHeader();
+  const footerHtml = generateEmailFooter();
+
   return `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #1a4d9f; padding: 20px;">
-      <h2 style="color: #1a4d9f;">You've Got Money! 💰</h2>
-      
-      <p>Hello ${transfer.recipientFullName},</p>
-      <p>You have received a bank transfer from <strong>${senderName}</strong> (via ShiftRemit).</p>
-      
-      <div style="background-color: #e6f0ff; padding: 15px; margin-bottom: 20px; border-radius: 5px;">
-        <p><strong>Amount Received:</strong> &#8358;${ngnEquivalent.toLocaleString(
-          "en-NG",
-          { maximumFractionDigits: 2 }
-        )}</p>
-        <p><strong>Sender Reference:</strong> ${transfer.transferReference}</p>
-        <p><strong>Purpose:</strong> ${transfer.purpose}</p>
+    <div style="background-color: #f3f4f6; padding: 20px; min-height: 100vh;">
+      <div style="max-width: 600px; margin: auto; background-color: #ffffff; color: #1f2937; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); overflow: hidden;">
+        
+        <div style="padding: 0 24px; border-bottom: 1px solid #e5e7eb;">
+          ${headerHtml}
+        </div>
+        
+        <div style="padding: 24px 24px 0 24px;">
+          <p style="color: #374151; font-size: 16px; margin-top: 8px;">Hello ${
+            transfer.recipientFullName
+          },</p>
+          <p style="color: #4b5563; font-size: 16px; margin-top: 16px;">
+            You have received a bank transfer from <strong>${senderName}</strong> (via ShiftRemit). The funds should reflect in your account shortly.
+          </p>
+        </div>
+        
+        <div style="padding: 24px;">
+          <h2 style="font-size: 20px; font-weight: bold; color: #1f2937; margin-bottom: 16px;">
+            Transfer Details
+          </h2>
+          
+          <div style="background-color: #e8f0ff; padding: 16px; margin-bottom: 32px; border-radius: 6px;">
+            <p style="margin: 0 0 4px 0; font-size: 14px;"><strong>Amount Received:</strong> &#8358;${ngnEquivalent.toLocaleString(
+              "en-NG",
+              { maximumFractionDigits: 2 }
+            )}</p>
+            <p style="margin: 4px 0; font-size: 14px;"><strong>Recipient Bank:</strong> ${
+              transfer.recipientBankName
+            }</p>
+            <p style="margin: 4px 0; font-size: 14px;"><strong>Transfer Reference:</strong> ${
+              transfer.transferReference
+            }</p>
+            <p style="margin: 4px 0 0 0; font-size: 14px;"><strong>Purpose:</strong> ${
+              transfer.purpose || "Money transfer"
+            }</p>
+          </div>
+          
+          <p style="color: #4b5563; font-size: 14px; margin-bottom: 4px;">Best regards,</p>
+          <p style="color: #4b5563; font-weight: 600; font-size: 14px; margin-top: 0;">
+            ShiftRemit Team
+          </p>
+
+          ${footerHtml}
+        </div>
       </div>
-      
-      <p>The funds should reflect in your account shortly.</p>
-      <p>Best regards,</p>
-      <p>ShiftRemit Team</p>
     </div>
   `;
 };
@@ -85,6 +245,7 @@ export const fetchAllTransfers = async (
     take: limit,
   });
 };
+
 interface TransferWithPdf extends BankTransfer {
   pdfFile: string;
   user: {
@@ -263,6 +424,7 @@ export const fetchDashboardData = async (
     },
   };
 };
+
 export const updateTransferStatus = async (
   transferId: string,
   newStatus: TransferStatus
