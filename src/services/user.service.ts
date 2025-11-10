@@ -20,6 +20,7 @@ export async function getBasicProfile(userId: string) {
       taxNumber: true,
       purposeOfShiftremit: true,
       profilePhotoUrl: true,
+      biodata: true,
     },
   });
 
