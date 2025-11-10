@@ -7,6 +7,7 @@ export const docMapping = {
   articleOfAssociation: "articleAssociationStatus",
   operatingBusinessUtilityBill: "utilityBillStatus",
   companyStatusReport: "companyStatusReportStatus",
+  additionalDocuments: "additionalDocumentsStatus",
 } as const;
 
 export type DocumentType = keyof typeof docMapping;
@@ -67,6 +68,7 @@ export const fetchIndividualDocuments = async (userId: string) => {
       utilityBillStatus: true,
       companyStatusReport: true,
       companyStatusReportStatus: true,
+      additionalDocuments: true,
     },
   });
 
