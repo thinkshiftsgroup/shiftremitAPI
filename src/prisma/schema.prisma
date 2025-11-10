@@ -25,9 +25,16 @@
     createdAt               DateTime            @default(now())
     updatedAt               DateTime            @updatedAt
     lastActive              DateTime?
+    gender                    String?
+    dob                       DateTime?
+    meansOfIdentification     String?  
+    validIDNumber             String?
+    idDate                    DateTime?
+    fullAddress               String?
+    taxNumber                 String?
+    purposeOfShiftremit       String?
     biodata                 Biodata?
     transfers               BankTransfer[]
-
   }
 
   model Biodata {
