@@ -19,6 +19,7 @@ interface BankTransferInput {
   recipientFullName: string;
   recipientEmail: string;
   userReference?: string;
+  conversionRate?: string;
   purpose: string;
   isRecipientBusinessAccount: boolean;
   userId: string;
