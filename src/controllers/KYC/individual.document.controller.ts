@@ -7,11 +7,6 @@ import {
 } from "@services/KYC/individual.document.service";
 import { MulterFile } from "src/types/Upload";
 
-interface AuthRequest extends Request {
-  userId?: string;
-  files?: { [fieldname: string]: MulterFile[] };
-}
-
 export const uploadMultipleDocumentsController = async (
   req: Request,
   res: Response,
@@ -38,11 +33,9 @@ export const uploadMultipleDocumentsController = async (
       const fileArray = files[docType];
 
       if (!allowedKeys.includes(docType as DocumentType)) {
-        return res
-          .status(400)
-          .json({
-            message: `Invalid document type field name provided: ${docType}`,
-          });
+        return res.status(400).json({
+          message: `Invalid document type field name provided: ${docType}`,
+        });
       }
 
       if (fileArray && fileArray.length > 0) {
@@ -63,7 +56,7 @@ export const uploadMultipleDocumentsController = async (
 };
 
 export const getDocumentsController = async (
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
@@ -77,12 +70,10 @@ export const getDocumentsController = async (
     const documents = await fetchIndividualDocuments(userId);
 
     if (!documents) {
-      return res
-        .status(200)
-        .json({
-          message: "No document record found for this user.",
-          data: null,
-        });
+      return res.status(200).json({
+        message: "No document record found for this user.",
+        data: null,
+      });
     }
 
     res.status(200).json({
