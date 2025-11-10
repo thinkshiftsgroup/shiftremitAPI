@@ -47,3 +47,15 @@ export interface FilterOptions {
   sortBy?: "createdAt" | "amount";
   sortOrder?: SortOrder;
 }
+
+export interface UserKpis {
+  totalTransfers: number;
+  totalCompleted: number;
+  totalPending: number;
+  totalFailed: number;
+  totalAmountSentGBP: number;
+  totalAmountPendingGBP: number;
+  totalAmountCompletedGBP: number;
+  lastTransferDate: Date | null;
+}
+export const validStatuses = Object.values(TransferStatus);

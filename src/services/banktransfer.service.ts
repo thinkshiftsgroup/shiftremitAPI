@@ -1,5 +1,5 @@
 import prisma from "@config/db";
-import { BankTransfer } from "@prisma/client";
+import { BankTransfer, TransferStatus } from "@prisma/client";
 import { sendTransferEmail } from "@utils/email";
 import { generateTransferReference, getLatestRates } from "@utils/helpers";
 import {
@@ -7,6 +7,7 @@ import {
   generateEmailHeader,
 } from "./admin/admin.transfers.service";
 const ADMIN_EMAIL = "chukwumasamuel371@gmail.com";
+import { FilterOptions, UserKpis } from "src/types/Transfers";
 
 interface BankTransferInput {
   amount: number;
@@ -186,15 +187,125 @@ export const createBankTransfer = async (
 export const fetchUserTransfers = async (
   userId: string,
   page: number = 1,
-  limit: number = 10
+  limit: number = 10,
+  filters: Partial<FilterOptions> = {}
 ) => {
+  const {
+    startDate,
+    endDate,
+    transactionReference,
+    currency,
+    status,
+    recipientName,
+    minAmount,
+    maxAmount,
+    sortBy = "createdAt",
+    sortOrder = "desc",
+  } = filters;
   const skip = (page - 1) * limit;
-  return prisma.bankTransfer.findMany({
+
+  const where: any = { userId };
+
+  if (startDate) {
+    where.createdAt = { ...where.createdAt, gte: new Date(startDate) };
+  }
+
+  if (endDate) {
+    const adjustedEndDate = new Date(endDate);
+    adjustedEndDate.setDate(adjustedEndDate.getDate() + 1);
+    where.createdAt = { ...where.createdAt, lt: adjustedEndDate };
+  }
+
+  if (transactionReference) {
+    where.transferReference = transactionReference;
+  }
+
+  if (currency === "GBP") {
+    where.fromCurrency = "GBP";
+  } else if (currency === "NGN") {
+    where.toCurrency = "NGN";
+  }
+
+  if (status) {
+    where.status = status;
+  }
+
+  if (recipientName) {
+    where.recipientFullName = { contains: recipientName, mode: "insensitive" };
+  }
+
+  if (minAmount !== undefined || maxAmount !== undefined) {
+    where.amount = {};
+    if (minAmount !== undefined) {
+      where.amount.gte = minAmount;
+    }
+    if (maxAmount !== undefined) {
+      where.amount.lte = maxAmount;
+    }
+  }
+
+  const allUserTransfers = await prisma.bankTransfer.findMany({
     where: { userId },
-    orderBy: {
-      createdAt: "desc",
+    select: {
+      status: true,
+      amount: true,
+      createdAt: true,
     },
-    skip: skip,
-    take: limit,
   });
+
+  const kpis: UserKpis = allUserTransfers.reduce(
+    (acc, transfer) => {
+      acc.totalTransfers += 1;
+      acc.totalAmountSentGBP += transfer.amount;
+
+      if (
+        transfer.status === TransferStatus.PENDING ||
+        transfer.status === TransferStatus.PROCESSING
+      ) {
+        acc.totalPending += 1;
+        acc.totalAmountPendingGBP += transfer.amount;
+      } else if (transfer.status === TransferStatus.COMPLETED) {
+        acc.totalCompleted += 1;
+        acc.totalAmountCompletedGBP += transfer.amount;
+      } else if (
+        transfer.status === TransferStatus.FAILED ||
+        transfer.status === TransferStatus.REJECTED ||
+        transfer.status === TransferStatus.CANCELED
+      ) {
+        acc.totalFailed += 1;
+      }
+
+      if (!acc.lastTransferDate || transfer.createdAt > acc.lastTransferDate) {
+        acc.lastTransferDate = transfer.createdAt;
+      }
+
+      return acc;
+    },
+    {
+      totalTransfers: 0,
+      totalCompleted: 0,
+      totalPending: 0,
+      totalFailed: 0,
+      totalAmountSentGBP: 0,
+      totalAmountPendingGBP: 0,
+      totalAmountCompletedGBP: 0,
+      lastTransferDate: null,
+    } as UserKpis
+  );
+
+  const [transfers, totalFilteredTransfers] = await prisma.$transaction([
+    prisma.bankTransfer.findMany({
+      where: where,
+      orderBy: {
+        [sortBy]: sortOrder,
+      },
+      skip: skip,
+      take: limit,
+    }),
+    prisma.bankTransfer.count({
+      where: where,
+    }),
+  ]);
+
+  return { transfers, totalFilteredTransfers, kpis };
 };
