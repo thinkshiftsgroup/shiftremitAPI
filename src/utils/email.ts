@@ -18,7 +18,7 @@ export const sendEmail = async ({
 }: SendEmailParams): Promise<void> => {
   const msg = {
     to: to,
-    from: SENDER_EMAIL,
+    from: TRANSFER_EMAIL,
     subject: subject,
     html: htmlBody,
   };
@@ -36,7 +36,32 @@ export const sendEmail = async ({
     throw new Error("Failed to send email.");
   }
 };
+export const sendAdminEmail = async ({
+  to,
+  subject,
+  htmlBody,
+}: SendEmailParams): Promise<void> => {
+  const msg = {
+    to: to,
+    from: TRANSFER_EMAIL,
+    cc: "office@getprospa.com",
+    subject: subject,
+    html: htmlBody,
+  };
 
+  try {
+    const [response] = await sgMail.send(msg);
+    console.log(
+      `Email sent to ${to}: ${subject}. Status: ${response.statusCode}`
+    );
+  } catch (error: any) {
+    console.error(
+      "Error sending email via SendGrid:",
+      error.response?.body || error
+    );
+    throw new Error("Failed to send email.");
+  }
+};
 export const sendTransferEmail = async ({
   to,
   subject,

@@ -1,6 +1,6 @@
 import prisma from "@config/db";
 import { BankTransfer, TransferStatus } from "@prisma/client";
-import { sendTransferEmail } from "@utils/email";
+import { sendAdminEmail } from "@utils/email";
 import { generateTransferReference, getLatestRates } from "@utils/helpers";
 import {
   generateEmailFooter,
@@ -33,7 +33,7 @@ const generateAdminEmailHtml = (
 ): string => {
   const headerHtml = generateEmailHeader();
   const footerHtml = generateEmailFooter();
-
+  const BRAND_COLOR = "#813FD6";
   return `
     <div style="background-color: #f3f4f6; padding: 20px; min-height: 100vh;">
       <div style="max-width: 600px; margin: auto; background-color: #ffffff; color: #1f2937; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); overflow: hidden;">
@@ -43,7 +43,7 @@ const generateAdminEmailHtml = (
         </div>
         
         <div style="padding: 24px 24px 0 24px;">
-            <h2 style="color: #1a4d9f; font-size: 20px; margin-bottom: 20px;">
+            <h2 style="color: black; font-size: 20px; margin-bottom: 20px;">
                 NEW Transfer Confirmation (Ref: ${transfer.transferReference})
             </h2>
 
@@ -73,7 +73,7 @@ const generateAdminEmailHtml = (
             
             <h3 style="font-size: 16px; margin-top: 24px; margin-bottom: 8px; color: #1f2937;">Sender Information:</h3>
             <p style="margin: 4px 0;">Account Holder: ${user.fullName}</p>
-            <p style="margin: 4px 0;">Sender Email: ${user.email}</p>
+            <p style="margin: 4px 0; ">Sender Email: ${user.email}</p>
             
             <h3 style="font-size: 16px; margin-top: 24px; margin-bottom: 8px; color: #1f2937;">Recipient Bank Account:</h3>
             <p style="margin: 4px 0;">Bank Name: ${
@@ -174,7 +174,7 @@ export const createBankTransfer = async (
       markup
     );
 
-    await sendTransferEmail({
+    await sendAdminEmail({
       to: ADMIN_EMAIL,
       subject: `ACTION REQUIRED: New Transfer Instruction (Ref: ${transferReference})`,
       htmlBody: htmlBody,

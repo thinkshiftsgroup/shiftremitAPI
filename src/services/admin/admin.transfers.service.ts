@@ -39,51 +39,68 @@ export const generateEmailHeader = (): string => {
 
 export const generateEmailFooter = (): string => {
   const BRAND_COLOR = "#813FD6";
+  const TEXT_COLOR = "#6b7280";
   return `
-    <div style="border-top: 1px solid #e5e7eb; padding-top: 24px; margin-top: 32px; color: #6b7280; font-size: 12px;">
-     <div style="margin-bottom: 8px;">
-        <a href="mailto:support@shiftremit.com" style="color: ${BRAND_COLOR}; text-decoration: none; font-size: 14px;">
-          <span style="color: ${BRAND_COLOR}; margin-right: 5px;">&#x2709;</span> support@shiftremit.com
+    <div style="border-top: 1px solid #e5e7eb; padding-top: 24px; margin-top: 32px; color: ${TEXT_COLOR}; font-size: 12px; font-family: sans-serif;">
+      
+      <div style="margin-bottom: 8px;">
+        <a href="mailto:support@shiftremit.com" target="_blank" style="color: ${BRAND_COLOR}; text-decoration: none; font-size: 14px; display: inline-flex; align-items: center; font-family: sans-serif;">
+          <img
+            src="https://res.cloudinary.com/dqny2b4gb/image/upload/v1762790487/mage--email_npabw0.png"
+            alt="Email Icon"
+            width="16"
+            height="16"
+            style="width: 16px; height: 16px; object-fit: contain; margin-right: 5px; vertical-align: middle; border: 0;"
+          />
+          support@shiftremit.com
         </a>
       </div>
+      
       <div style="margin-bottom: 16px;">
-        <a href="YOUR_WEBSITE_URL" target="_blank" style="color: ${BRAND_COLOR}; text-decoration: none; font-size: 14px;">
-          <span style="color: ${BRAND_COLOR}; margin-right: 5px;">&#x1F310;</span> www.shiftremit.com
+        <a href="YOUR_WEBSITE_URL" target="_blank" style="color: ${BRAND_COLOR}; text-decoration: none; font-size: 14px; display: inline-flex; align-items: center; font-family: sans-serif;">
+          <img
+            src="https://res.cloudinary.com/dqny2b4gb/image/upload/v1762790487/streamline-plump--web_hkel9o.png"
+            alt="Website Icon"
+            width="16"
+            height="16"
+            style="width: 16px; height: 16px; object-fit: contain; margin-right: 5px; vertical-align: middle; border: 0;"
+          />
+          www.shiftremit.com
         </a>
       </div>
 
       <p style="margin: 0 0 4px 0;">© 2024 - 2025 ShiftRemit Limited. All Rights Reserved.</p>
-      <p style="margin: 0 0 4px 0;">
-        <a href="" target="_blank" style="color: #6b7280; text-decoration: underline;">
+      <p style="margin: 0 0 4px 0; font-family: sans-serif;">
+        <a href="" target="_blank" style="color: ${TEXT_COLOR}; text-decoration: underline;">
           Privacy Policy
         </a>
         ·
-        <a href="" target="_blank" style="color: #6b7280; text-decoration: underline;">
+        <a href="" target="_blank" style="color: ${TEXT_COLOR}; text-decoration: underline;">
           Terms of Use
         </a>
         · 
-        <a href="=" target="_blank" style="color: #6b7280; text-decoration: underline;">
+        <a href="=" target="_blank" style="color: ${TEXT_COLOR}; text-decoration: underline;">
           Payouts
         </a>
       </p>
-      <p style="margin: 0;">
+      <p style="margin: 0; font-family: sans-serif;">
         Follow us on 
-        <a href="" target="_blank" style="color: #6b7280; text-decoration: underline;">
+        <a href="" target="_blank" style="color: ${TEXT_COLOR}; text-decoration: underline;">
           Instagram
         </a>,
-        <a href="" target="_blank" style="color: #6b7280; text-decoration: underline;">
+        <a href="" target="_blank" style="color: ${TEXT_COLOR}; text-decoration: underline;">
           Youtube
         </a>,
-        <a href="" target="_blank" style="color: #6b7280; text-decoration: underline;">
+        <a href="" target="_blank" style="color: ${TEXT_COLOR}; text-decoration: underline;">
           LinkedIn
         </a>,
-        <a href="" target="_blank" style="color: #6b7280; text-decoration: underline;">
+        <a href="" target="_blank" style="color: ${TEXT_COLOR}; text-decoration: underline;">
           Facebook
         </a>,
-        <a href="YOUR_SOCIAL_TWITTER_URL" target="_blank" style="color: #6b7280; text-decoration: underline;">
+        <a href="YOUR_SOCIAL_TWITTER_URL" target="_blank" style="color: ${TEXT_COLOR}; text-decoration: underline;">
           Twitter (X)
         </a>,
-        <a href="YOUR_SOCIAL_TIKTOK_URL" target="_blank" style="color: #6b7280; text-decoration: underline;">
+        <a href="YOUR_SOCIAL_TIKTOK_URL" target="_blank" style="color: ${TEXT_COLOR}; text-decoration: underline;">
           TikTok
         </a>
       </p>
