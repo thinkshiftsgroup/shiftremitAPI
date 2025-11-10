@@ -18,6 +18,7 @@ interface BankTransferInput {
   recipientAccountNumber: string;
   recipientFullName: string;
   recipientEmail: string;
+  userReference?: string;
   purpose: string;
   isRecipientBusinessAccount: boolean;
   userId: string;
@@ -147,6 +148,7 @@ export const createBankTransfer = async (
       recipientAccountNumber: input.recipientAccountNumber,
       recipientFullName: input.recipientFullName,
       recipientEmail: input.recipientEmail,
+      userReference: input.userReference,
       purpose: input.purpose,
       isRecipientBusinessAccount: input.isRecipientBusinessAccount,
       transferReference: transferReference,
