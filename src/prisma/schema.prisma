@@ -128,7 +128,9 @@ model IndividualAccountDoc {
   articleAssociationStatus          DocStatus   @default(PENDING)
   utilityBillStatus                 DocStatus   @default(PENDING)
   companyStatusReportStatus         DocStatus   @default(PENDING)
+  additionalDocumentsStatus         DocStatus @default(PENDING)
 
+  overallStatus                     OverallDocStatus @default(PENDING_UPLOAD)
   createdAt                         DateTime    @default(now())
   updatedAt                         DateTime    @updatedAt
   
@@ -141,5 +143,13 @@ enum DocStatus {
   PENDING
   APPROVED
   IN_REVIEW
+  REJECTED
+}
+
+enum OverallDocStatus {
+  NOT_STARTED
+  PENDING_UPLOAD
+  PENDING_REVIEW
+  APPROVED
   REJECTED
 }

@@ -13,13 +13,13 @@ interface AuthRequest extends Request {
 }
 
 export const uploadMultipleDocumentsController = async (
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const userId = req.userId;
-    const files = req.files;
+    const userId = (req as any).user.id;
+    const files = req.files as { [fieldname: string]: MulterFile[] };
 
     if (!userId) {
       return res.status(401).json({ message: "Authentication required." });
@@ -34,21 +34,21 @@ export const uploadMultipleDocumentsController = async (
       docMapping
     ) as DocumentType[];
 
-    for (const docType in files) {
-      if (files.hasOwnProperty(docType)) {
-        const fileArray = files[docType];
+    for (const docType of Object.keys(files)) {
+      const fileArray = files[docType];
 
-        if (!allowedKeys.includes(docType as DocumentType)) {
-          return res.status(400).json({
+      if (!allowedKeys.includes(docType as DocumentType)) {
+        return res
+          .status(400)
+          .json({
             message: `Invalid document type field name provided: ${docType}`,
           });
-        }
+      }
 
-        if (fileArray && fileArray.length > 0) {
-          uploadPromises.push(
-            uploadAndSaveDocuments(userId, fileArray, docType as DocumentType)
-          );
-        }
+      if (fileArray && fileArray.length > 0) {
+        uploadPromises.push(
+          uploadAndSaveDocuments(userId, fileArray, docType as DocumentType)
+        );
       }
     }
 
@@ -68,7 +68,7 @@ export const getDocumentsController = async (
   next: NextFunction
 ) => {
   try {
-    const userId = req.userId;
+    const userId = (req as any).user.id;
 
     if (!userId) {
       return res.status(401).json({ message: "Authentication required." });
@@ -77,10 +77,12 @@ export const getDocumentsController = async (
     const documents = await fetchIndividualDocuments(userId);
 
     if (!documents) {
-      return res.status(200).json({
-        message: "No document record found for this user.",
-        data: null,
-      });
+      return res
+        .status(200)
+        .json({
+          message: "No document record found for this user.",
+          data: null,
+        });
     }
 
     res.status(200).json({
