@@ -10,6 +10,7 @@ import { adminRatesRouter } from "@routes/admin/admin.rates.routes";
 import { verificationRouter } from "@routes/verification.route";
 import { bankTransferRouter } from "@routes/banktransfer.route";
 import { profileRouter } from "@routes/user.route";
+import { individualDocumentRouter } from "@routes/KYC/individual.document.route";
 import { adminTransferAccountRouter } from "@routes/admin/admin.transferaccount.route";
 import { adminTransferRouter } from "@routes/admin/admin.transfers.route";
 const app = express();
@@ -39,7 +40,7 @@ app.use("/api/rates", ratesRouter);
 app.use("/api/verification", verificationRouter);
 app.use("/api/bank-transfer", bankTransferRouter);
 app.use("/api/profile", profileRouter);
-
+app.use("/api/individual-doc", individualDocumentRouter);
 app.use("/api/admin/rates", adminRatesRouter);
 app.use("/api/admin/transfer-account", adminTransferAccountRouter);
 app.use("/api/admin/transfers", adminTransferRouter);
