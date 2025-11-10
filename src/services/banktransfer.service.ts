@@ -107,8 +107,89 @@ const generateAdminEmailHtml = (
     </div>
   `;
 };
+
+const generateNgnToGbpAdminEmailHtml = (
+  transfer: BankTransfer,
+  user: { fullName: string; email: string },
+  gbpEquivalent: number,
+  effectiveRate: number
+): string => {
+  const headerHtml = generateEmailHeader();
+  const footerHtml = generateEmailFooter();
+  const BRAND_COLOR = "#813FD6";
+  return `
+    <div style="background-color: #f3f4f6; padding: 20px; min-height: 100vh;">
+      <div style="max-width: 600px; margin: auto; background-color: #ffffff; color: #1f2937; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); overflow: hidden;">
+        
+        <div style="padding: 0 24px; border-bottom: 1px solid #e5e7eb;">
+          ${headerHtml}
+        </div>
+        
+        <div style="padding: 24px 24px 0 24px;">
+            <h2 style="color: black; font-size: 20px; margin-bottom: 20px;">
+                NEW NGN to GBP Transfer (Ref: ${transfer.transferReference})
+            </h2>
+
+            <p style="margin-top: 0;">Dear Prospa Team,</p>
+            <p>Kindly confirm and initiate the following $\text{NGN} \to \text{GBP}$ transfer instruction within <strong>5 minutes</strong> of receipt:</p>
+            
+            <div style="border: 1px dashed #ccc; padding: 15px; margin-bottom: 20px; background-color: #f0f8ff;">
+              <h3 style="margin-top: 0; color: #813FD6; font-size: 16px;">Transfer Summary</h3>
+              <p style="margin: 4px 0;"><strong>Reference:</strong> ${
+                transfer.transferReference
+              }</p>
+              <p style="margin: 4px 0;"><strong>Amount Sent in NGN:</strong> &#8358;${transfer.amount.toLocaleString(
+                "en-NG",
+                { maximumFractionDigits: 2 }
+              )}</p>
+              
+              <p style="margin: 8px 0 4px 0;"><strong>Exchange Rate Used:</strong> &#8358;${effectiveRate.toFixed(
+                2
+              )} / &pound;1</p>
+              <p style="margin: 4px 0 8px 0;"><strong>Equivalent Amount in GBP:</strong> &pound;${gbpEquivalent.toFixed(
+                2
+              )}</p>
+              <p style="font-size: 12px; margin: 0; color: #cc6600;">(Please double-check the equivalent before disbursement.)</p>
+            </div>
+            
+            <h3 style="font-size: 16px; margin-top: 24px; margin-bottom: 8px; color: #1f2937;">Sender Information:</h3>
+            <p style="margin: 4px 0;">Account Holder: ${user.fullName}</p>
+            <p style="margin: 4px 0; ">Sender Email: ${user.email}</p>
+            
+            <h3 style="font-size: 16px; margin-top: 24px; margin-bottom: 8px; color: #1f2937;">Recipient Bank Account:</h3>
+            <p style="margin: 4px 0;">Bank Name: ${
+              transfer.recipientBankName
+            }</p>
+            <p style="margin: 4px 0;">Account Number: ${
+              transfer.recipientAccountNumber
+            }</p>
+            <p style="margin: 4px 0;">Account Name: ${
+              transfer.recipientFullName
+            }</p>
+            <p style="margin: 4px 0;">Recipient Email: ${
+              transfer.recipientEmail
+            }</p>
+            <p style="margin: 4px 0;">Purpose: ${transfer.purpose}</p>
+            <p style="margin: 4px 0;">Business Account: <strong>${
+              transfer.isRecipientBusinessAccount ? "Yes" : "No"
+            }</strong></p>
+            
+          
+            <br>
+            <p style="margin: 0;">Thank you,</p>
+            <p style="margin: 0;"><strong>ShiftRemit Operations Team</strong></p>
+        </div>
+
+        <div style="padding: 0 24px 24px 24px;">
+            ${footerHtml}
+        </div>
+      </div>
+    </div>
+  `;
+};
+
 export const createBankTransfer = async (
-  input: BankTransferInput
+  input: BankTransferInput & { conversionRate?: number }
 ): Promise<{ accountDetails: any; transferReference: string }> => {
   let transferReference: string;
   let isUnique = false;
@@ -121,12 +202,32 @@ export const createBankTransfer = async (
     isUnique = !existing;
   } while (!isUnique);
 
-  const rates = await getLatestRates();
-  const benchmarkNgnRate = rates.rateNGN;
-  const markup = rates.benchmarkGBP;
-  const effectiveRate = benchmarkNgnRate - markup;
-  const ngnEquivalent =
-    input.convertedNGNAmount || input.amount * effectiveRate;
+  let effectiveRate: number;
+  let benchmarkNgnRate: number = 0;
+  let markup: number = 0;
+  let ngnEquivalent: number;
+
+  if (input.conversionRate) {
+    effectiveRate = input.conversionRate;
+  } else {
+    const rates = await getLatestRates();
+    benchmarkNgnRate = rates.rateNGN;
+    markup = rates.benchmarkGBP;
+    effectiveRate = input.conversionRate || benchmarkNgnRate + markup;
+  }
+
+  if (input.fromCurrency === "GBP" && input.toCurrency === "NGN") {
+    ngnEquivalent = input.convertedNGNAmount || input.amount * effectiveRate;
+  } else if (input.fromCurrency === "NGN" && input.toCurrency === "GBP") {
+    ngnEquivalent = input.amount;
+  } else {
+    throw new Error("Unsupported currency pair for transfer creation.");
+  }
+
+  const convertedAmount =
+    input.fromCurrency === "GBP" && input.toCurrency === "NGN"
+      ? ngnEquivalent
+      : input.amount;
 
   const newTransfer = await prisma.bankTransfer.create({
     data: {
@@ -134,7 +235,7 @@ export const createBankTransfer = async (
       amount: input.amount,
       fromCurrency: input.fromCurrency,
       toCurrency: input.toCurrency,
-      convertedNGNAmount: input.convertedNGNAmount || ngnEquivalent,
+      convertedNGNAmount: convertedAmount,
       recipientBankName: input.recipientBankName,
       recipientAccountNumber: input.recipientAccountNumber,
       recipientFullName: input.recipientFullName,
@@ -144,6 +245,7 @@ export const createBankTransfer = async (
       isRecipientBusinessAccount: input.isRecipientBusinessAccount,
       transferReference: transferReference,
       status: "PENDING",
+      conversionRate: input.conversionRate || effectiveRate,
     },
   });
 
@@ -158,18 +260,36 @@ export const createBankTransfer = async (
   if (!user || !accountDetails) {
     console.error("User or AccountData not found. Cannot send admin email.");
   } else {
-    const htmlBody = generateAdminEmailHtml(
-      newTransfer,
-      user as { fullName: string; email: string },
-      ngnEquivalent,
-      effectiveRate,
-      benchmarkNgnRate,
-      markup
-    );
+    let subject: string;
+    let htmlBody: string;
+
+    if (input.fromCurrency === "GBP" && input.toCurrency === "NGN") {
+      subject = `ACTION REQUIRED: New GBP to NGN Transfer (Ref: ${transferReference})`;
+      htmlBody = generateAdminEmailHtml(
+        newTransfer,
+        user as { fullName: string; email: string },
+        ngnEquivalent,
+        effectiveRate,
+        benchmarkNgnRate,
+        markup
+      );
+    } else if (input.fromCurrency === "NGN" && input.toCurrency === "GBP") {
+      subject = `ACTION REQUIRED: New NGN to GBP Transfer (Ref: ${transferReference})`;
+      const gbpEquivalent = input.amount / effectiveRate;
+      htmlBody = generateNgnToGbpAdminEmailHtml(
+        newTransfer,
+        user as { fullName: string; email: string },
+        gbpEquivalent,
+        effectiveRate
+      );
+    } else {
+      subject = `ACTION REQUIRED: New Transfer (Ref: ${transferReference}) - Unknown Currency Pair`;
+      htmlBody = `<p>Transfer created with reference ${transferReference} but currency pair ${input.fromCurrency}/${input.toCurrency} is unsupported for email generation.</p>`;
+    }
 
     await sendAdminEmail({
       to: ADMIN_EMAIL,
-      subject: `ACTION REQUIRED: New Transfer Instruction (Ref: ${transferReference})`,
+      subject: subject,
       htmlBody: htmlBody,
     });
   }
