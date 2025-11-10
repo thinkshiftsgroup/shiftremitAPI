@@ -69,41 +69,8 @@ export const generateEmailFooter = (): string => {
         </a>
       </div>
 
-      <p style="margin: 0 0 4px 0;">© 2024 - 2025 ShiftRemit Limited. All Rights Reserved.</p>
-      <p style="margin: 0 0 4px 0; font-family: sans-serif;">
-        <a href="" target="_blank" style="color: ${TEXT_COLOR}; text-decoration: underline;">
-          Privacy Policy
-        </a>
-        ·
-        <a href="" target="_blank" style="color: ${TEXT_COLOR}; text-decoration: underline;">
-          Terms of Use
-        </a>
-        · 
-        <a href="=" target="_blank" style="color: ${TEXT_COLOR}; text-decoration: underline;">
-          Payouts
-        </a>
-      </p>
-      <p style="margin: 0; font-family: sans-serif;">
-        Follow us on 
-        <a href="" target="_blank" style="color: ${TEXT_COLOR}; text-decoration: underline;">
-          Instagram
-        </a>,
-        <a href="" target="_blank" style="color: ${TEXT_COLOR}; text-decoration: underline;">
-          Youtube
-        </a>,
-        <a href="" target="_blank" style="color: ${TEXT_COLOR}; text-decoration: underline;">
-          LinkedIn
-        </a>,
-        <a href="" target="_blank" style="color: ${TEXT_COLOR}; text-decoration: underline;">
-          Facebook
-        </a>,
-        <a href="YOUR_SOCIAL_TWITTER_URL" target="_blank" style="color: ${TEXT_COLOR}; text-decoration: underline;">
-          Twitter (X)
-        </a>,
-        <a href="YOUR_SOCIAL_TIKTOK_URL" target="_blank" style="color: ${TEXT_COLOR}; text-decoration: underline;">
-          TikTok
-        </a>
-      </p>
+      <p style="margin: 0 0 4px 0;">©2025 ShiftRemit. All Rights Reserved.</p>
+   
     </div>
   `;
 };

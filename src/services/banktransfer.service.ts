@@ -6,7 +6,7 @@ import {
   generateEmailFooter,
   generateEmailHeader,
 } from "./admin/admin.transfers.service";
-const ADMIN_EMAIL = "finance@shiftremit.com";
+const ADMIN_EMAIL = "chukwumasamuel371@gmail.com";
 import { FilterOptions, UserKpis } from "src/types/Transfers";
 
 interface BankTransferInput {
@@ -94,16 +94,7 @@ const generateAdminEmailHtml = (
               transfer.isRecipientBusinessAccount ? "Yes" : "No"
             }</strong></p>
             
-            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ddd;">
-            
-            <h3 style="font-size: 16px; margin-top: 0; margin-bottom: 8px; color: #1f2937;">Processing Instruction:</h3>
-            <p style="margin: 4px 0;">Retain our markup of <strong>&#8358;${markup.toFixed(
-              2
-            )} per &pound;</strong> (Benchmark Rate: &#8358;${benchmarkNgnRate.toFixed(
-    2
-  )})</p>
-            <p style="margin: 4px 0;">Please send INSTANT confirmation once the Naira transfer has been successfully completed.</p>
-            
+         
             <br>
             <p style="margin: 0;">Thank you,</p>
             <p style="margin: 0;"><strong>ShiftRemit Operations Team</strong></p>
