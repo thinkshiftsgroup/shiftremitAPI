@@ -188,9 +188,8 @@ const generateNgnToGbpAdminEmailHtml = (
     </div>
   `;
 };
-
 export const createBankTransfer = async (
-  input: BankTransferInput & { conversionRate?: number }
+  input: BankTransferInput
 ): Promise<{ accountDetails: any; transferReference: string }> => {
   let transferReference: string;
   let isUnique = false;
@@ -208,15 +207,19 @@ export const createBankTransfer = async (
   let markup: number = 0;
   let ngnEquivalent: number;
 
-  if (input.conversionRate) {
-    effectiveRate = input.conversionRate;
+  const inputRate = input.conversionRate
+    ? Number(input.conversionRate)
+    : undefined;
+
+  if (inputRate && !isNaN(inputRate)) {
+    effectiveRate = inputRate;
   } else {
     const rates = await getLatestRates();
     benchmarkNgnRate = rates.rateNGN;
     markup = rates.benchmarkGBP;
-    effectiveRate = input.conversionRate || benchmarkNgnRate + markup;
-  }
 
+    effectiveRate = benchmarkNgnRate - markup;
+  }
   if (input.fromCurrency === "GBP" && input.toCurrency === "NGN") {
     ngnEquivalent = input.convertedNGNAmount || input.amount * effectiveRate;
   } else if (input.fromCurrency === "NGN" && input.toCurrency === "GBP") {
@@ -246,7 +249,7 @@ export const createBankTransfer = async (
       isRecipientBusinessAccount: input.isRecipientBusinessAccount,
       transferReference: transferReference,
       status: "PENDING",
-      conversionRate: input.conversionRate || effectiveRate,
+      conversionRate: effectiveRate,
     },
   });
 

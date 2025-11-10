@@ -13,6 +13,7 @@ interface TransferRequestBody {
   recipientAccountNumber: string;
   recipientFullName: string;
   recipientEmail: string;
+  conversionRate: string;
   purpose: string;
   isRecipientBusinessAccount: boolean;
 }
@@ -31,6 +32,7 @@ export const requestBankTransfer = async (req: Request, res: Response) => {
     recipientAccountNumber,
     recipientFullName,
     recipientEmail,
+    conversionRate,
     purpose,
     isRecipientBusinessAccount,
   } = req.body as TransferRequestBody;
@@ -56,7 +58,9 @@ export const requestBankTransfer = async (req: Request, res: Response) => {
       recipientBankName,
       recipientAccountNumber,
       recipientFullName,
+
       recipientEmail,
+      conversionRate,
       purpose,
       isRecipientBusinessAccount,
     });
