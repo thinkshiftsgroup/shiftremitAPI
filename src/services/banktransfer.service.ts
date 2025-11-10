@@ -210,11 +210,10 @@ export const createBankTransfer = async (
   const inputRate = input.conversionRate
     ? Number(input.conversionRate)
     : undefined;
-
+  const rates = await getLatestRates();
   if (inputRate && !isNaN(inputRate)) {
-    effectiveRate = inputRate;
+    effectiveRate = inputRate + rates.benchmarkGBP;
   } else {
-    const rates = await getLatestRates();
     benchmarkNgnRate = rates.rateNGN;
     markup = rates.benchmarkGBP;
 
