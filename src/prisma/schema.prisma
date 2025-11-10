@@ -90,7 +90,6 @@ model BankTransfer {
   status                      TransferStatus   @default(PENDING)
   createdAt                   DateTime         @default(now())
   updatedAt                   DateTime         @updatedAt
-  
   user                        User             @relation(fields: [userId], references: [id])
 }
 
@@ -100,4 +99,15 @@ model AccountData {
   GBPAccountNumber  String    @unique
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+}
+
+model PaymentLink {
+  id                String    @id @default(auto()) @map("_id") @db.ObjectId
+  linkId            String    @unique
+  amountGBP        Float
+  amountNGN        Float
+  purpose          String
+  isPaid           Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 }

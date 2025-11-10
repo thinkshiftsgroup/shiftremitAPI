@@ -33,16 +33,17 @@ export const generateEmailHeader = (): string => {
 };
 
 export const generateEmailFooter = (): string => {
+  const BRAND_COLOR = "#813FD6";
   return `
     <div style="border-top: 1px solid #e5e7eb; padding-top: 24px; margin-top: 32px; color: #6b7280; font-size: 12px;">
-      <div style="margin-bottom: 8px;">
-        <a href="mailto:support@shiftremit.com" style="color: #813FD6; text-decoration: none; font-size: 14px;">
-          📧 support@shiftremit.com
+     <div style="margin-bottom: 8px;">
+        <a href="mailto:support@shiftremit.com" style="color: ${BRAND_COLOR}; text-decoration: none; font-size: 14px;">
+          <span style="color: ${BRAND_COLOR}; margin-right: 5px;">&#x2709;</span> support@shiftremit.com
         </a>
       </div>
       <div style="margin-bottom: 16px;">
-        <a href="YOUR_WEBSITE_URL" target="_blank" style="color: #813FD6; text-decoration: none; font-size: 14px;">
-          🌐 www.shiftremit.com
+        <a href="YOUR_WEBSITE_URL" target="_blank" style="color: ${BRAND_COLOR}; text-decoration: none; font-size: 14px;">
+          <span style="color: ${BRAND_COLOR}; margin-right: 5px;">&#x1F310;</span> www.shiftremit.com
         </a>
       </div>
 

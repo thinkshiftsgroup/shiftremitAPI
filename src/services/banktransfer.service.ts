@@ -6,7 +6,7 @@ import {
   generateEmailFooter,
   generateEmailHeader,
 } from "./admin/admin.transfers.service";
-const ADMIN_EMAIL = "finance@shiftremit.com";
+const ADMIN_EMAIL = "chukwumasamuel371@gmail.com";
 
 interface BankTransferInput {
   amount: number;
