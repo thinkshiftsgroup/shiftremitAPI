@@ -2,7 +2,12 @@ import prisma from "@config/db";
 import { TransferStatus, BankTransfer } from "@prisma/client";
 import { sendTransferEmail } from "@utils/email";
 import { getLatestRates } from "@utils/helpers";
-
+import {
+  SortOrder,
+  TransferWithPdf,
+  DashboardData,
+  FilterOptions,
+} from "src/types/Transfers";
 export const generateEmailHeader = (): string => {
   const logoUrl =
     "https://shiftremit.com/_next/image?url=%2Fimages%2Fshiftremit-logo.png&w=128&q=75";
@@ -247,54 +252,24 @@ export const fetchAllTransfers = async (
   });
 };
 
-interface TransferWithPdf extends BankTransfer {
-  pdfFile: string;
-  user: {
-    username: string;
-    fullName: string;
-    email: string;
-    profilePhotoUrl: string | null;
-  };
-}
-
-interface DashboardData {
-  transfers: TransferWithPdf[];
-  kpis: {
-    totalTransactions: number;
-    totalCompleted: number;
-    totalAbandoned: number;
-    totalPending: number;
-    totalFailed: number;
-    totalRejected: number;
-    totalCanceled: number;
-    totalProcessing: number;
-  };
-  totals: {
-    totalAmountGBP: number;
-    totalAmountNGN: number;
-  };
-  pagination: {
-    currentPage: number;
-    totalPages: number;
-    totalItems: number;
-  };
-}
-
-interface FilterOptions {
-  startDate?: string;
-  endDate?: string;
-  transactionReference?: string;
-  currency?: "GBP" | "NGN";
-  status?: TransferStatus;
-}
-
 export const fetchDashboardData = async (
   page: number = 1,
   limit: number = 10,
   filters: FilterOptions = {}
 ): Promise<DashboardData> => {
-  const { startDate, endDate, transactionReference, currency, status } =
-    filters;
+  const {
+    startDate,
+    endDate,
+    transactionReference,
+    currency,
+    status,
+    recipientName,
+    senderName,
+    minAmount,
+    maxAmount,
+    sortBy = "createdAt",
+    sortOrder = "desc",
+  } = filters;
   const skip = (page - 1) * limit;
 
   const where: any = {};
@@ -320,6 +295,24 @@ export const fetchDashboardData = async (
   }
   if (status) {
     where.status = status;
+  }
+
+  if (recipientName) {
+    where.recipientFullName = { contains: recipientName, mode: "insensitive" };
+  }
+
+  if (senderName) {
+    where.user = { fullName: { contains: senderName, mode: "insensitive" } };
+  }
+
+  if (minAmount !== undefined || maxAmount !== undefined) {
+    where.amount = {};
+    if (minAmount !== undefined) {
+      where.amount.gte = minAmount;
+    }
+    if (maxAmount !== undefined) {
+      where.amount.lte = maxAmount;
+    }
   }
 
   const allMatchingTransfers = await prisma.bankTransfer.findMany({
@@ -393,7 +386,7 @@ export const fetchDashboardData = async (
   const rawTransfers = await prisma.bankTransfer.findMany({
     where: where,
     orderBy: {
-      createdAt: "desc",
+      [sortBy]: sortOrder,
     },
     include: {
       user: {

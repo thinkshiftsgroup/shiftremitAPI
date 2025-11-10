@@ -1,12 +1,11 @@
 import { Request, Response } from "express";
 import { TransferStatus } from "@prisma/client";
 import {
-  fetchAllTransfers,
   fetchDashboardData,
   updateTransferStatus,
   deleteAllTransfers,
 } from "@services/admin/admin.transfers.service";
-
+import { SortOrder, FilterOptions } from "src/types/Transfers";
 const validStatuses: TransferStatus[] = [
   "PENDING",
   "PROCESSING",
@@ -16,6 +15,7 @@ const validStatuses: TransferStatus[] = [
   "FAILED",
   "CANCELED",
 ];
+
 export const getAllTransfers = async (req: Request, res: Response) => {
   const page = parseInt(req.query.page as string) || 1;
   const limit = parseInt(req.query.limit as string) || 10;
@@ -28,6 +28,21 @@ export const getAllTransfers = async (req: Request, res: Response) => {
 
   const rawCurrency = req.query.currency as string | undefined;
   const rawStatus = req.query.status as string | undefined;
+  const recipientName = req.query.recipientName as string | undefined;
+  const senderName = req.query.senderName as string | undefined;
+  const minAmount = req.query.minAmount
+    ? parseFloat(req.query.minAmount as string)
+    : undefined;
+  const maxAmount = req.query.maxAmount
+    ? parseFloat(req.query.maxAmount as string)
+    : undefined;
+
+  const sortBy: "createdAt" | "amount" | undefined =
+    req.query.sortBy === "amount" ? "amount" : "createdAt";
+  const sortOrder: SortOrder | undefined =
+    req.query.sortOrder === "asc" || req.query.sortOrder === "desc"
+      ? (req.query.sortOrder as SortOrder)
+      : "desc";
 
   const currency: "GBP" | "NGN" | undefined =
     rawCurrency === "GBP" || rawCurrency === "NGN" ? rawCurrency : undefined;
@@ -44,12 +59,28 @@ export const getAllTransfers = async (req: Request, res: Response) => {
     });
   }
 
-  const filters = {
+  if (
+    minAmount !== undefined &&
+    maxAmount !== undefined &&
+    minAmount > maxAmount
+  ) {
+    return res.status(400).json({
+      message: "Minimum amount cannot be greater than maximum amount.",
+    });
+  }
+
+  const filters: FilterOptions = {
     startDate,
     endDate,
     transactionReference,
     currency,
     status,
+    recipientName,
+    senderName,
+    minAmount,
+    maxAmount,
+    sortBy,
+    sortOrder,
   };
 
   try {
@@ -65,6 +96,8 @@ export const getAllTransfers = async (req: Request, res: Response) => {
       meta: {
         ...pagination,
         limit,
+        sortBy,
+        sortOrder,
       },
     });
   } catch (error: any) {
