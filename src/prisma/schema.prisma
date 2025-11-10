@@ -38,6 +38,7 @@
     taxNumber                 String?
     purposeOfShiftremit       String?
     biodata                 Biodata?
+    individualAccountDoc      IndividualAccountDoc?
     transfers               BankTransfer[]
   }
 
@@ -113,3 +114,32 @@
     createdAt         DateTime  @default(now())
     updatedAt         DateTime  @updatedAt
   }
+
+model IndividualAccountDoc {
+  id                                String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId                            String      @db.ObjectId
+  businessRegistrationCertificate   String?
+  articleOfAssociation              String?
+  operatingBusinessUtilityBill      String?
+  additionalDocuments               String?
+  companyStatusReport               String?
+  
+  registrationCertStatus            DocStatus   @default(PENDING)
+  articleAssociationStatus          DocStatus   @default(PENDING)
+  utilityBillStatus                 DocStatus   @default(PENDING)
+  companyStatusReportStatus         DocStatus   @default(PENDING)
+
+  createdAt                         DateTime    @default(now())
+  updatedAt                         DateTime    @updatedAt
+  
+  user                              User        @relation(fields: [userId], references: [id])
+  
+  @@unique([userId])
+}
+
+enum DocStatus {
+  PENDING
+  APPROVED
+  IN_REVIEW
+  REJECTED
+}
