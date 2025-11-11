@@ -6,6 +6,7 @@ export const docMapping = {
   recentProofOfAddress: "recentProofOfAddressStatus",
   recentSelfieWithID: "recentSelfieWithIDStatus",
   proofOfValidID: "proofOfValidIDStatus",
+
   recentBankStatement: "recentBankStatementStatus",
   additionalDocuments: "additionalDocumentsStatus",
 } as const;
@@ -36,7 +37,8 @@ export const uploadAndSaveDocuments = async (
 
   const updateData: any = {
     [docType]: docUrl,
-    [statusField]: "PENDING",
+    // CHANGED STATUS FROM "PENDING" TO "IN_REVIEW"
+    [statusField]: "IN_REVIEW",
   };
 
   if (docRecord) {
@@ -53,7 +55,7 @@ export const uploadAndSaveDocuments = async (
     });
   }
 
-  return { message: "Document uploaded and status set to PENDING.", docUrl };
+  return { message: "Document uploaded and status set to IN_REVIEW.", docUrl };
 };
 
 export const fetchIndividualDocuments = async (userId: string) => {
