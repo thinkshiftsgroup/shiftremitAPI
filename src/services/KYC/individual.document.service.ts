@@ -37,8 +37,8 @@ export const uploadAndSaveDocuments = async (
 
   const updateData: any = {
     [docType]: docUrl,
-    // CHANGED STATUS FROM "PENDING" TO "IN_REVIEW"
     [statusField]: "IN_REVIEW",
+    overallStatus: "PENDING_REVIEW",
   };
 
   if (docRecord) {
@@ -51,6 +51,7 @@ export const uploadAndSaveDocuments = async (
       data: {
         userId,
         ...updateData,
+        overallStatus: "PENDING_REVIEW",
       },
     });
   }
