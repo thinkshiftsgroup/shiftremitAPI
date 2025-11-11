@@ -206,23 +206,30 @@ export const createBankTransfer = async (
   let benchmarkNgnRate: number = 0;
   let markup: number = 0;
   let ngnEquivalent: number;
+  let gbpEquivalent: number = 0;
 
   const inputRate = input.conversionRate
     ? Number(input.conversionRate)
     : undefined;
   const rates = await getLatestRates();
+
   if (inputRate && !isNaN(inputRate)) {
     effectiveRate = inputRate + rates.benchmarkGBP;
   } else {
     benchmarkNgnRate = rates.rateNGN;
     markup = rates.benchmarkGBP;
-
     effectiveRate = benchmarkNgnRate - markup;
   }
+
   if (input.fromCurrency === "GBP" && input.toCurrency === "NGN") {
     ngnEquivalent = input.convertedNGNAmount || input.amount * effectiveRate;
+    gbpEquivalent = input.amount;
   } else if (input.fromCurrency === "NGN" && input.toCurrency === "GBP") {
+    if (!inputRate || isNaN(inputRate)) {
+      effectiveRate = rates.rateNGN;
+    }
     ngnEquivalent = input.amount;
+    gbpEquivalent = input.amount / effectiveRate;
   } else {
     throw new Error("Unsupported currency pair for transfer creation.");
   }
@@ -230,7 +237,7 @@ export const createBankTransfer = async (
   const convertedAmount =
     input.fromCurrency === "GBP" && input.toCurrency === "NGN"
       ? ngnEquivalent
-      : input.amount;
+      : gbpEquivalent;
 
   const newTransfer = await prisma.bankTransfer.create({
     data: {
@@ -238,7 +245,8 @@ export const createBankTransfer = async (
       amount: input.amount,
       fromCurrency: input.fromCurrency,
       toCurrency: input.toCurrency,
-      convertedNGNAmount: convertedAmount,
+      convertedNGNAmount: ngnEquivalent,
+      convertedGBPAmount: gbpEquivalent,
       recipientBankName: input.recipientBankName,
       recipientAccountNumber: input.recipientAccountNumber,
       recipientFullName: input.recipientFullName,
@@ -252,16 +260,37 @@ export const createBankTransfer = async (
     },
   });
 
+  let fetchedAccountDetails: any;
+  if (input.fromCurrency !== "NGN") {
+    fetchedAccountDetails = await prisma.accountData.findFirst({});
+  }
+
   const [user, accountDetails] = await Promise.all([
     prisma.user.findUnique({
       where: { id: input.userId },
       select: { fullName: true, email: true },
     }),
-    prisma.accountData.findFirst({}),
+    input.fromCurrency === "NGN"
+      ? Promise.resolve(null)
+      : prisma.accountData.findFirst({}),
   ]);
 
-  if (!user || !accountDetails) {
-    console.error("User or AccountData not found. Cannot send admin email.");
+  let finalAccountDetails: any;
+  if (input.fromCurrency === "NGN") {
+    finalAccountDetails = {
+      bankName: "Prospa capital MFB",
+      accountNumber: "0111377577",
+    };
+  } else {
+    finalAccountDetails = accountDetails;
+  }
+
+  if (!user || !finalAccountDetails) {
+    if (input.fromCurrency !== "NGN") {
+      console.error("User or AccountData not found. Cannot send admin email.");
+    } else if (!user) {
+      console.error("User not found. Cannot send admin email.");
+    }
   } else {
     let subject: string;
     let htmlBody: string;
@@ -278,7 +307,6 @@ export const createBankTransfer = async (
       );
     } else if (input.fromCurrency === "NGN" && input.toCurrency === "GBP") {
       subject = `ACTION REQUIRED: New NGN to GBP Transfer (Ref: ${transferReference})`;
-      const gbpEquivalent = input.amount / effectiveRate;
       htmlBody = generateNgnToGbpAdminEmailHtml(
         newTransfer,
         user as { fullName: string; email: string },
@@ -297,7 +325,7 @@ export const createBankTransfer = async (
     });
   }
 
-  return { accountDetails, transferReference };
+  return { accountDetails: finalAccountDetails, transferReference };
 };
 
 export const fetchUserTransfers = async (

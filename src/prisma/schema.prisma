@@ -89,6 +89,7 @@
     userId                      String           @db.ObjectId
     amount                      Float
     convertedNGNAmount          Float?
+    convertedGBPAmount          Float?
     fromCurrency                String
     toCurrency                  String
     recipientBankName           String
@@ -98,6 +99,7 @@
     purpose                     String
     pdfFile                     String?
     userReference               String?
+
     isRecipientBusinessAccount  Boolean
     transferReference           String           @unique
     status                      TransferStatus   @default(PENDING)
