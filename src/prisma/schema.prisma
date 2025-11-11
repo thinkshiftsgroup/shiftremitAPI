@@ -99,7 +99,7 @@
     purpose                     String
     pdfFile                     String?
     userReference               String?
-
+    sortCode                    String?
     isRecipientBusinessAccount  Boolean
     transferReference           String           @unique
     status                      TransferStatus   @default(PENDING)
