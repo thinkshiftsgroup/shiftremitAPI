@@ -118,29 +118,28 @@
   }
 
 model IndividualAccountDoc {
-  id                                String      @id @default(auto()) @map("_id") @db.ObjectId
-  userId                            String      @db.ObjectId
-  businessRegistrationCertificate   String?
-  articleOfAssociation              String?
-  operatingBusinessUtilityBill      String?
-  additionalDocuments               String?
-  companyStatusReport               String?
+  id                                    String         @id @default(auto()) @map("_id") @db.ObjectId
+  userId                                String         @db.ObjectId
+  recentProofOfAddress                  String?
+  recentSelfieWithID                    String?
+  proofOfValidID                        String?
+  recentBankStatement                   String?
+  additionalDocuments                   String?
   
-  registrationCertStatus            DocStatus   @default(PENDING)
-  articleAssociationStatus          DocStatus   @default(PENDING)
-  utilityBillStatus                 DocStatus   @default(PENDING)
-  companyStatusReportStatus         DocStatus   @default(PENDING)
-  additionalDocumentsStatus         DocStatus @default(PENDING)
+  recentProofOfAddressStatus            DocStatus      @default(PENDING)
+  recentSelfieWithIDStatus              DocStatus      @default(PENDING)
+  proofOfValidIDStatus                  DocStatus      @default(PENDING)
+  recentBankStatementStatus             DocStatus      @default(PENDING)
+  additionalDocumentsStatus             DocStatus      @default(PENDING)
 
-  overallStatus                     OverallDocStatus @default(PENDING_UPLOAD)
-  createdAt                         DateTime    @default(now())
-  updatedAt                         DateTime    @updatedAt
+  overallStatus                         OverallDocStatus @default(PENDING_UPLOAD)
+  createdAt                             DateTime       @default(now())
+  updatedAt                             DateTime       @updatedAt
   
-  user                              User        @relation(fields: [userId], references: [id])
+  user                                  User           @relation(fields: [userId], references: [id])
   
   @@unique([userId])
 }
-
 enum DocStatus {
   PENDING
   APPROVED

@@ -235,11 +235,6 @@ export const createBankTransfer = async (
     throw new Error("Unsupported currency pair for transfer creation.");
   }
 
-  const convertedAmount =
-    input.fromCurrency === "GBP" && input.toCurrency === "NGN"
-      ? ngnEquivalent
-      : gbpEquivalent;
-
   const newTransfer = await prisma.bankTransfer.create({
     data: {
       userId: input.userId,

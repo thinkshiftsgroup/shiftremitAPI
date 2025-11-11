@@ -16,10 +16,10 @@ documentRouter.post(
   "/upload",
   protect,
   upload.fields([
-    { name: "businessRegistrationCertificate", maxCount: 1 },
-    { name: "articleOfAssociation", maxCount: 1 },
-    { name: "operatingBusinessUtilityBill", maxCount: 1 },
-    { name: "companyStatusReport", maxCount: 1 },
+    { name: "recentProofOfAddress", maxCount: 1 },
+    { name: "recentSelfieWithID", maxCount: 1 },
+    { name: "proofOfValidID", maxCount: 1 },
+    { name: "recentBankStatement", maxCount: 1 },
     { name: "additionalDocuments", maxCount: 1 },
   ]),
   asyncHandler(uploadMultipleDocumentsController)
