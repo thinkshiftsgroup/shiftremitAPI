@@ -141,6 +141,8 @@ model IndividualAccountDoc {
   @@unique([userId])
 }
 enum DocStatus {
+  PENDING_UPLOAD
+
   PENDING
   APPROVED
   IN_REVIEW
