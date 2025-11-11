@@ -3,10 +3,10 @@ import { uploadMultipleToCloudinary } from "@utils/cloudinary";
 import prisma from "@config/db";
 
 export const docMapping = {
-  businessRegistrationCertificate: "registrationCertStatus",
-  articleOfAssociation: "articleAssociationStatus",
-  operatingBusinessUtilityBill: "utilityBillStatus",
-  companyStatusReport: "companyStatusReportStatus",
+  recentProofOfAddress: "recentProofOfAddressStatus",
+  recentSelfieWithID: "recentSelfieWithIDStatus",
+  proofOfValidID: "proofOfValidIDStatus",
+  recentBankStatement: "recentBankStatementStatus",
   additionalDocuments: "additionalDocumentsStatus",
 } as const;
 
@@ -60,15 +60,17 @@ export const fetchIndividualDocuments = async (userId: string) => {
   const docRecord = await prisma.individualAccountDoc.findUnique({
     where: { userId },
     select: {
-      businessRegistrationCertificate: true,
-      registrationCertStatus: true,
-      articleOfAssociation: true,
-      articleAssociationStatus: true,
-      operatingBusinessUtilityBill: true,
-      utilityBillStatus: true,
-      companyStatusReport: true,
-      companyStatusReportStatus: true,
+      recentProofOfAddress: true,
+      recentProofOfAddressStatus: true,
+      recentSelfieWithID: true,
+      recentSelfieWithIDStatus: true,
+      proofOfValidID: true,
+      proofOfValidIDStatus: true,
+      recentBankStatement: true,
+      recentBankStatementStatus: true,
       additionalDocuments: true,
+      additionalDocumentsStatus: true,
+      overallStatus: true,
     },
   });
 
