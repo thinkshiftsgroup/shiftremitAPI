@@ -8,7 +8,12 @@ import { protect } from "@middlewares/auth.middleware";
 import asyncHandler from "@utils/asyncHandler";
 
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 50 * 1024 * 1024,
+  },
+});
 
 const documentRouter = Router();
 

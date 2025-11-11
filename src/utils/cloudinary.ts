@@ -11,6 +11,8 @@ interface CloudinaryUploadResponse {
 const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
 const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
 
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+
 export const uploadToCloudinary = async (
   file: MulterFile,
   resourceType: CloudinaryResourceTypes = "auto"
@@ -18,6 +20,14 @@ export const uploadToCloudinary = async (
   if (!CLOUD_NAME || !UPLOAD_PRESET) {
     throw new Error(
       "Missing CLOUDINARY_CLOUD_NAME or UPLOAD_PRESET environment variables."
+    );
+  }
+
+  if (file.buffer.length > MAX_FILE_SIZE_BYTES) {
+    throw new Error(
+      `File size (${(file.buffer.length / 1024 / 1024).toFixed(
+        2
+      )} MB) exceeds the maximum allowed limit of 10 MB.`
     );
   }
 
@@ -38,7 +48,9 @@ export const uploadToCloudinary = async (
       formData,
       {
         headers: formData.getHeaders(),
-        timeout: 60000,
+        timeout: 0,
+        maxBodyLength: Infinity,
+        maxContentLength: Infinity,
       }
     );
 
