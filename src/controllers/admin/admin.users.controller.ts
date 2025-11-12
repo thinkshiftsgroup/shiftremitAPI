@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import {
   getAllUsers,
   getUserWithDocs,
+  UserQueryOptions,
 } from "@services/admin/admin.users.service";
 
 export const listAllUsers = async (req: Request, res: Response) => {
@@ -14,8 +15,41 @@ export const listAllUsers = async (req: Request, res: Response) => {
       .json({ message: "Page and limit must be positive numbers" });
   }
 
+  const sortByAmount = req.query.sortByAmount as "asc" | "desc" | undefined;
+  const sortByDate = req.query.sortByDate as "asc" | "desc" | undefined;
+
+  let startDate: Date | undefined;
+  let endDate: Date | undefined;
+
+  if (req.query.startDate) {
+    startDate = new Date(req.query.startDate as string);
+    if (isNaN(startDate.getTime())) {
+      return res.status(400).json({
+        message: "Invalid startDate format. Use ISO format (YYYY-MM-DD).",
+      });
+    }
+  }
+
+  if (req.query.endDate) {
+    endDate = new Date(req.query.endDate as string);
+    if (isNaN(endDate.getTime())) {
+      return res.status(400).json({
+        message: "Invalid endDate format. Use ISO format (YYYY-MM-DD).",
+      });
+    }
+  }
+
+  const options: UserQueryOptions = {
+    page,
+    limit,
+    sortByAmount,
+    sortByDate,
+    startDate,
+    endDate,
+  };
+
   try {
-    const { users, totalCount } = await getAllUsers(page, limit);
+    const { users, totalCount } = await getAllUsers(options);
 
     const totalPages = Math.ceil(totalCount / limit);
 
