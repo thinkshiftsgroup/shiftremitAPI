@@ -1,149 +1,160 @@
-  generator client {
-    provider = "prisma-client-js"
-  }
+generator client {
+  provider = "prisma-client-js"
+}
 
-  datasource db {
-    provider = "mongodb"
-    url      = env("DATABASE_URL")
-  }
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
 
-  model User {
-    id                      String              @id @default(auto()) @map("_id") @db.ObjectId
-    email                   String              @unique
-    username                String              @unique 
-    fullName                String 
-    firstname               String?
-    lastname                String?
-    middlename              String?
-    politicalExposure       String?      
-    phoneNumber             String?     
-    country                 String?          
-    userType                String              @default("user")
-    password                String              
-    profilePhotoUrl         String?
-    isVerified              Boolean             @default(false)
-    verificationCode        String?             @unique
-    verificationCodeExpires DateTime?
-    resetPasswordToken      String?             @unique
-    resetPasswordExpires    DateTime?
-    createdAt               DateTime            @default(now())
-    updatedAt               DateTime            @updatedAt
-    lastActive              DateTime?
-    gender                    String?
-    dob                       DateTime?
-    meansOfIdentification     String?  
-    validIDNumber             String?
-    idDate                    DateTime?
-    fullAddress               String?
-    taxNumber                 String?
-    purposeOfShiftremit       String?
-    biodata                 Biodata?
-    individualAccountDoc      IndividualAccountDoc?
-    transfers               BankTransfer[]
-  }
+model User {
+  id                    String                 @id @default(auto()) @map("_id") @db.ObjectId
+  email                 String                 @unique
+  username              String                 @unique 
+  fullName              String 
+  firstname             String?
+  lastname              String?
+  middlename            String?
+  politicalExposure     String?        
+  phoneNumber           String?      
+  country               String?          
+  userType              String                 @default("user")
+  password              String                 
+  profilePhotoUrl       String?
+  isVerified            Boolean                @default(false)
+  verificationCode      String?                @unique
+  verificationCodeExpires DateTime?
+  resetPasswordToken    String?                @unique
+  resetPasswordExpires  DateTime?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  lastActive            DateTime?
+  gender                String?
+  dob                   DateTime?
+  meansOfIdentification String?    
+  validIDNumber         String?
+  idDate                DateTime?
+  fullAddress           String?
+  taxNumber             String?
+  purposeOfShiftremit   String?
+  
+  biodata               Biodata?
+  individualAccountDoc  IndividualAccountDoc?
+  kycSubmission         IndividualKYC? 
+  transfers             BankTransfer[]
+}
 
-  model Biodata {
-    id            String    @id @default(auto()) @map("_id") @db.ObjectId
-    userId        String    @unique @db.ObjectId
-    dateOfBirth   DateTime  @default(now())
-    country       String?
-    pronouns      String?
-    phone         String?
-    city          String?
-    role          String?
-    industry      String?
-    tags          String?
-    headline      String?
-    createdAt     DateTime  @default(now())
-    updatedAt     DateTime  @updatedAt
-    user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  }
+model Biodata {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String    @unique @db.ObjectId
+  dateOfBirth   DateTime  @default(now())
+  country       String?
+  pronouns      String?
+  phone         String?
+  city          String?
+  role          String?
+  industry      String?
+  tags          String?
+  headline      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
 
-  model RatesData {
-    id            String    @id @default(auto()) @map("_id") @db.ObjectId
-    benchmarkGBP  Float
-    rateNGN       Float
-    createdAt     DateTime  @default(now())
-    updatedAt     DateTime  @updatedAt
-  }
+model IndividualKYC {
+  id                String           @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String           @unique @db.ObjectId
+  submissionDate    DateTime         @default(now())
+  status            OverallDocStatus @default(NOT_STARTED)
+  
+  user              User             @relation(fields: [userId], references: [id])
+}
 
-  model RateHistory {
-    id            String    @id @default(auto()) @map("_id") @db.ObjectId
-    benchmarkGBP  Float
-    rateNGN       Float
-    recordedAt    DateTime  @default(now()) 
-  }
+model RatesData {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  benchmarkGBP  Float
+  rateNGN       Float
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
 
-  enum TransferStatus {
-    PENDING
-    PROCESSING
-    ABANDONED
-    COMPLETED
-    FAILED
-    REJECTED
-    CANCELED
-  }
+model RateHistory {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  benchmarkGBP  Float
+  rateNGN       Float
+  recordedAt    DateTime  @default(now()) 
+}
 
-  model BankTransfer {
-    id                          String           @id @default(auto()) @map("_id") @db.ObjectId
-    userId                      String           @db.ObjectId
-    amount                      Float
-    convertedNGNAmount          Float?
-    convertedGBPAmount          Float?
-    fromCurrency                String
-    toCurrency                  String
-    recipientBankName           String
-    recipientAccountNumber      String
-    recipientFullName           String
-    recipientEmail              String
-    purpose                     String
-    pdfFile                     String?
-    userReference               String?
-    sortCode                    String?
-    isRecipientBusinessAccount  Boolean
-    transferReference           String           @unique
-    status                      TransferStatus   @default(PENDING)
-    createdAt                   DateTime         @default(now())
-    updatedAt                   DateTime         @updatedAt
-    user                        User             @relation(fields: [userId], references: [id])
-    conversionRate              Float?
-  }
+enum TransferStatus {
+  PENDING
+  PROCESSING
+  ABANDONED
+  COMPLETED
+  FAILED
+  REJECTED
+  CANCELED
+}
 
-  model AccountData {
-    id                String    @id @default(auto()) @map("_id") @db.ObjectId
-    GBPAccountName    String
-    GBPAccountNumber  String    @unique
-    createdAt         DateTime  @default(now())
-    updatedAt         DateTime  @updatedAt
-  }
+model BankTransfer {
+  id                         String           @id @default(auto()) @map("_id") @db.ObjectId
+  userId                     String           @db.ObjectId
+  amount                     Float
+  convertedNGNAmount         Float?
+  convertedGBPAmount         Float?
+  fromCurrency               String
+  toCurrency                 String
+  recipientBankName          String
+  recipientAccountNumber     String
+  recipientFullName          String
+  recipientEmail             String
+  purpose                    String
+  pdfFile                    String?
+  userReference              String?
+  sortCode                   String?
+  isRecipientBusinessAccount Boolean
+  transferReference          String           @unique
+  status                     TransferStatus   @default(PENDING)
+  createdAt                  DateTime         @default(now())
+  updatedAt                  DateTime         @updatedAt
+  user                       User             @relation(fields: [userId], references: [id])
+  conversionRate             Float?
+}
+
+model AccountData {
+  id                 String    @id @default(auto()) @map("_id") @db.ObjectId
+  GBPAccountName     String
+  GBPAccountNumber   String    @unique
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}
 
 model IndividualAccountDoc {
-  id                                    String         @id @default(auto()) @map("_id") @db.ObjectId
-  userId                                String         @db.ObjectId
-  recentProofOfAddress                  String?
-  recentSelfieWithID                    String?
-  proofOfValidID                        String?
-  proofOfValidIDBackView                String?
-  recentBankStatement                   String?
-  additionalDocuments                   String?
+  id                                String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId                            String    @db.ObjectId
+  recentProofOfAddress              String?
+  recentSelfieWithID                String?
+  proofOfValidID                    String?
+  proofOfValidIDBackView            String?
+  recentBankStatement               String?
+  additionalDocuments               String?
   
-  recentProofOfAddressStatus            DocStatus      @default(PENDING)
-  recentSelfieWithIDStatus              DocStatus      @default(PENDING)
-  proofOfValidIDStatus                  DocStatus      @default(PENDING)
-  proofOfValidIDBackViewStatus          DocStatus      @default(PENDING)
-  recentBankStatementStatus             DocStatus      @default(PENDING)
-  additionalDocumentsStatus             DocStatus      @default(PENDING)
+  recentProofOfAddressStatus        DocStatus @default(PENDING)
+  recentSelfieWithIDStatus          DocStatus @default(PENDING)
+  proofOfValidIDStatus              DocStatus @default(PENDING)
+  proofOfValidIDBackViewStatus      DocStatus @default(PENDING)
+  recentBankStatementStatus         DocStatus @default(PENDING)
+  additionalDocumentsStatus         DocStatus @default(PENDING)
 
-  overallStatus                         OverallDocStatus @default(PENDING_UPLOAD)
-  createdAt                             DateTime       @default(now())
-  updatedAt                             DateTime       @updatedAt
+  overallStatus                     OverallDocStatus @default(PENDING_UPLOAD)
+  createdAt                         DateTime  @default(now())
+  updatedAt                         DateTime  @updatedAt
   
-  user                                  User           @relation(fields: [userId], references: [id])
+  user                              User      @relation(fields: [userId], references: [id])
   
   @@unique([userId])
 }
+
 enum DocStatus {
- 
   PENDING
   APPROVED
   IN_REVIEW

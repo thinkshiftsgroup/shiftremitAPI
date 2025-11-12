@@ -13,6 +13,7 @@ import { bankTransferRouter } from "@routes/banktransfer.route";
 import { profileRouter } from "@routes/user.route";
 import { individualDocumentRouter } from "@routes/KYC/individual.document.route";
 import { userRecipientRouter } from "@routes/recipient.route";
+import { individualKYCRouter } from "@routes/KYC/kyc.submission.route";
 
 import { adminTransferAccountRouter } from "@routes/admin/admin.transferaccount.route";
 import { adminTransferRouter } from "@routes/admin/admin.transfers.route";
@@ -47,6 +48,7 @@ app.use("/api/recipients", userRecipientRouter);
 app.use("/api/bank-transfer", bankTransferRouter);
 app.use("/api/profile", profileRouter);
 app.use("/api/individual-doc", individualDocumentRouter);
+app.use("/api/kyc", individualKYCRouter);
 
 app.use("/api/admin/rates", adminRatesRouter);
 app.use("/api/admin/transfer-account", adminTransferAccountRouter);
