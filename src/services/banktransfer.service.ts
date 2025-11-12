@@ -32,11 +32,17 @@ const generateAdminEmailHtml = (
   ngnEquivalent: number,
   effectiveRate: number,
   benchmarkNgnRate: number,
-  markup: number
+  markup: number,
+  senderAccountDetails: {
+    bankName: string;
+    accountNumber: string;
+    sortCode: string;
+  } | null
 ): string => {
   const headerHtml = generateEmailHeader();
   const footerHtml = generateEmailFooter();
   const BRAND_COLOR = "#813FD6";
+
   return `
     <div style="background-color: #f3f4f6; padding: 20px; min-height: 100vh;">
       <div style="max-width: 600px; margin: auto; background-color: #ffffff; color: #1f2937; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); overflow: hidden;">
@@ -51,7 +57,9 @@ const generateAdminEmailHtml = (
             </h2>
 
             <p style="margin-top: 0;">Dear Prospa Team,</p>
-            <p>Kindly confirm and process the following transfer instruction within <strong>5 minutes</strong> of receipt:</p>
+            <p>Kindly confirm via <strong>${
+              senderAccountDetails?.accountNumber
+            }</strong> bank account and process the following transfer made to  instruction within <strong>5 minutes</strong> of receipt:</p>
             
             <div style="border: 1px dashed #ccc; padding: 15px; margin-bottom: 20px; background-color: #fffbf5;">
               <h3 style="margin-top: 0; color: #813FD6; font-size: 16px;">Transfer Summary</h3>
@@ -78,6 +86,9 @@ const generateAdminEmailHtml = (
             <p style="margin: 4px 0;">Account Holder: ${user.fullName}</p>
             <p style="margin: 4px 0; ">Sender Email: ${user.email}</p>
             
+         
+
+
             <h3 style="font-size: 16px; margin-top: 24px; margin-bottom: 8px; color: #1f2937;">Recipient Bank Account:</h3>
             <p style="margin: 4px 0;">Bank Name: ${
               transfer.recipientBankName
@@ -118,7 +129,7 @@ const generateNgnToGbpAdminEmailHtml = (
 ): string => {
   const headerHtml = generateEmailHeader();
   const footerHtml = generateEmailFooter();
-  const BRAND_COLOR = "#813FD6";
+
   return `
     <div style="background-color: #f3f4f6; padding: 20px; min-height: 100vh;">
       <div style="max-width: 600px; margin: auto; background-color: #ffffff; color: #1f2937; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); overflow: hidden;">
@@ -133,8 +144,9 @@ const generateNgnToGbpAdminEmailHtml = (
             </h2>
 
             <p style="margin-top: 0;">Dear Prospa Team,</p>
-            <p>Kindly confirm and initiate the following $\text{NGN} \to \text{GBP}$ transfer instruction within <strong>5 minutes</strong> of receipt:</p>
+                <p>Kindly confirm via <strong>0111377577</strong> bank account and process the following transfer made to  instruction within <strong>5 minutes</strong> of receipt:</p>
             
+         
             <div style="border: 1px dashed #ccc; padding: 15px; margin-bottom: 20px; background-color: #f0f8ff;">
               <h3 style="margin-top: 0; color: #813FD6; font-size: 16px;">Transfer Summary</h3>
               <p style="margin: 4px 0;"><strong>Reference:</strong> ${
@@ -291,6 +303,14 @@ export const createBankTransfer = async (
   } else {
     let subject: string;
     let htmlBody: string;
+    const senderDetails =
+      input.fromCurrency === "GBP" && finalAccountDetails
+        ? {
+            bankName: "PROSPA TECHNOLOGY LIMITED",
+            accountNumber: "87812060",
+            sortCode: finalAccountDetails.sortCode,
+          }
+        : null;
 
     if (input.fromCurrency === "GBP" && input.toCurrency === "NGN") {
       subject = `ACTION REQUIRED: New GBP to NGN Transfer (Ref: ${transferReference})`;
@@ -300,7 +320,8 @@ export const createBankTransfer = async (
         ngnEquivalent,
         effectiveRate,
         benchmarkNgnRate,
-        markup
+        markup,
+        senderDetails
       );
     } else if (input.fromCurrency === "NGN" && input.toCurrency === "GBP") {
       subject = `ACTION REQUIRED: New NGN to GBP Transfer (Ref: ${transferReference})`;
