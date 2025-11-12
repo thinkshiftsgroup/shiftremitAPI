@@ -468,3 +468,23 @@ export const deleteAllTransfers = async () => {
   const result = await prisma.bankTransfer.deleteMany({});
   return result;
 };
+export const deleteAllTransfersExcept = async (
+  referenceToKeep: string = "SR149037"
+) => {
+  const result = await prisma.bankTransfer.deleteMany({
+    where: {
+      transferReference: {
+        not: referenceToKeep,
+      },
+    },
+  });
+  return result;
+};
+export const deleteSingleTransfer = async (transferId: string) => {
+  const deletedTransfer = await prisma.bankTransfer.delete({
+    where: {
+      id: transferId,
+    },
+  });
+  return deletedTransfer;
+};

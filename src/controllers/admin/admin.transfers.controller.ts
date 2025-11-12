@@ -4,6 +4,8 @@ import {
   fetchDashboardData,
   updateTransferStatus,
   deleteAllTransfers,
+  deleteSingleTransfer,
+  deleteAllTransfersExcept,
 } from "@services/admin/admin.transfers.service";
 import { SortOrder, FilterOptions } from "src/types/Transfers";
 const validStatuses: TransferStatus[] = [
@@ -154,6 +156,58 @@ export const adminDeleteAllTransfers = async (req: any, res: any) => {
     console.error("Error deleting all transfers:", error);
     res.status(500).json({
       error: "An error occurred while attempting to delete all transfers.",
+    });
+  }
+};
+
+export const adminDeleteAllTransfersExceptReference = async (
+  req: Request,
+  res: Response
+) => {
+  const referenceToKeep = req.params.reference as string | undefined;
+
+  if (!referenceToKeep) {
+    return res
+      .status(400)
+      .json({ message: "Transfer reference to keep must be provided." });
+  }
+
+  try {
+    const { count } = await deleteAllTransfersExcept(referenceToKeep);
+
+    res.status(200).json({
+      message: `Successfully deleted ${count} bank transfer records, excluding reference ${referenceToKeep}.`,
+      deletedCount: count,
+    });
+  } catch (error: any) {
+    console.error("Error deleting transfers except reference:", error.message);
+    res.status(500).json({
+      message: "An error occurred while deleting transfers.",
+      details: error.message,
+    });
+  }
+};
+
+export const adminDeleteTransfer = async (req: Request, res: Response) => {
+  const { transferId } = req.params;
+
+  try {
+    const deletedTransfer = await deleteSingleTransfer(transferId);
+
+    res.status(200).json({
+      message: `Transfer ${deletedTransfer.transferReference} deleted successfully.`,
+      deletedTransferId: deletedTransfer.id,
+    });
+  } catch (error: any) {
+    if (error.code === "P2025") {
+      return res.status(404).json({
+        message: `Transfer with ID ${transferId} not found.`,
+      });
+    }
+    console.error("Error deleting single transfer:", error.message);
+    res.status(500).json({
+      message: "Failed to delete transfer.",
+      details: error.message,
     });
   }
 };
