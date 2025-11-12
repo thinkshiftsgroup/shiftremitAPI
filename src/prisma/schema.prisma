@@ -123,13 +123,14 @@ model IndividualAccountDoc {
   recentProofOfAddress                  String?
   recentSelfieWithID                    String?
   proofOfValidID                        String?
-  proofOfValidIDBack                    String?
+  proofOfValidIDBackView                String?
   recentBankStatement                   String?
   additionalDocuments                   String?
   
   recentProofOfAddressStatus            DocStatus      @default(PENDING)
   recentSelfieWithIDStatus              DocStatus      @default(PENDING)
   proofOfValidIDStatus                  DocStatus      @default(PENDING)
+  proofOfValidIDBackViewStatus          DocStatus      @default(PENDING)
   recentBankStatementStatus             DocStatus      @default(PENDING)
   additionalDocumentsStatus             DocStatus      @default(PENDING)
 
