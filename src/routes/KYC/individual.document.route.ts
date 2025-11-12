@@ -3,6 +3,8 @@ import multer from "multer";
 import {
   uploadMultipleDocumentsController,
   getDocumentsController,
+  deleteDocumentsController,
+  deleteSingleDocumentController,
 } from "@controllers/KYC/individual.document.controller";
 import { protect } from "@middlewares/auth.middleware";
 import asyncHandler from "@utils/asyncHandler";
@@ -32,5 +34,16 @@ documentRouter.post(
 );
 
 documentRouter.get("/", protect, asyncHandler(getDocumentsController));
+documentRouter.delete(
+  "/delete",
+  protect,
+  asyncHandler(deleteDocumentsController)
+);
+
+documentRouter.delete(
+  "/delete-single/:docType",
+  protect,
+  asyncHandler(deleteSingleDocumentController)
+);
 
 export const individualDocumentRouter = documentRouter;

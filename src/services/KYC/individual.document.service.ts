@@ -1,5 +1,6 @@
 import { MulterFile } from "src/types/Upload";
 import { uploadMultipleToCloudinary } from "@utils/cloudinary";
+import { DocStatus } from "@prisma/client";
 import prisma from "@config/db";
 
 export const docMapping = {
@@ -85,4 +86,77 @@ export const fetchIndividualDocuments = async (userId: string) => {
   }
 
   return docRecord;
+};
+
+export const deleteIndividualDocuments = async (userId: string) => {
+  const resetData: any = {
+    recentProofOfAddress: null,
+    recentSelfieWithID: null,
+    proofOfValidID: null,
+    proofOfValidIDBackView: null,
+    recentBankStatement: null,
+    additionalDocuments: null,
+
+    recentProofOfAddressStatus: "PENDING",
+    recentSelfieWithIDStatus: "PENDING",
+    proofOfValidIDStatus: "PENDING",
+    proofOfValidIDBackViewStatus: "PENDING",
+    recentBankStatementStatus: "PENDING",
+    additionalDocumentsStatus: "PENDING",
+
+    overallStatus: "PENDING_UPLOAD",
+  };
+
+  const docRecord = await prisma.individualAccountDoc.findUnique({
+    where: { userId },
+  });
+
+  if (!docRecord) {
+    return { success: false, message: "No document record found to reset." };
+  }
+
+  await prisma.individualAccountDoc.update({
+    where: { userId },
+    data: resetData,
+  });
+
+  return {
+    success: true,
+    message: "All document links and statuses have been reset.",
+  };
+};
+
+export const deleteSingleDocument = async (
+  userId: string,
+  docType: DocumentType
+) => {
+  if (!docMapping.hasOwnProperty(docType)) {
+    throw new Error(`Invalid document type: ${docType}`);
+  }
+
+  const statusField = docMapping[docType];
+
+  const updateData: any = {
+    [docType]: null,
+    [statusField]: DocStatus.PENDING,
+    overallStatus: "PENDING_UPLOAD",
+  };
+
+  const docRecord = await prisma.individualAccountDoc.findUnique({
+    where: { userId },
+  });
+
+  if (!docRecord) {
+    return { success: false, message: "No document record found." };
+  }
+
+  await prisma.individualAccountDoc.update({
+    where: { userId },
+    data: updateData,
+  });
+
+  return {
+    success: true,
+    message: `Document '${docType}' link and status have been reset.`,
+  };
 };

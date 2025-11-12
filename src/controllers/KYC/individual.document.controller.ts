@@ -4,6 +4,8 @@ import {
   docMapping,
   DocumentType,
   fetchIndividualDocuments,
+  deleteIndividualDocuments,
+  deleteSingleDocument,
 } from "@services/KYC/individual.document.service";
 import { MulterFile } from "src/types/Upload";
 
@@ -79,6 +81,65 @@ export const getDocumentsController = async (
     res.status(200).json({
       message: "Documents and statuses fetched successfully.",
       data: documents,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteDocumentsController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = (req as any).user.id;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Authentication required." });
+    }
+
+    const result = await deleteIndividualDocuments(userId);
+
+    if (!result.success) {
+      return res.status(404).json({ message: result.message });
+    }
+
+    res.status(200).json({
+      message: result.message,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteSingleDocumentController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = (req as any).user.id;
+    const docType = req.params.docType as DocumentType;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Authentication required." });
+    }
+
+    if (!docType) {
+      return res
+        .status(400)
+        .json({ message: "Document type parameter is required." });
+    }
+
+    const result = await deleteSingleDocument(userId, docType);
+
+    if (!result.success) {
+      return res.status(404).json({ message: result.message });
+    }
+
+    res.status(200).json({
+      message: result.message,
     });
   } catch (error) {
     next(error);
