@@ -7,6 +7,7 @@ export const docMapping = {
   recentSelfieWithID: "recentSelfieWithIDStatus",
   proofOfValidID: "proofOfValidIDStatus",
 
+  proofOfValidIDBackView: "proofOfValidIDBackViewStatus",
   recentBankStatement: "recentBankStatementStatus",
   additionalDocuments: "additionalDocumentsStatus",
 } as const;
@@ -69,6 +70,8 @@ export const fetchIndividualDocuments = async (userId: string) => {
       recentSelfieWithIDStatus: true,
       proofOfValidID: true,
       proofOfValidIDStatus: true,
+      proofOfValidIDBackView: true,
+      proofOfValidIDBackViewStatus: true,
       recentBankStatement: true,
       recentBankStatementStatus: true,
       additionalDocuments: true,
