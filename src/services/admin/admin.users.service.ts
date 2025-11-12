@@ -63,7 +63,7 @@ export const getAllUsers = async (
       where: where,
       orderBy: orderBy,
       include: {
-        individualAccountDoc: true,
+        // individualAccountDoc: true,
         kycSubmission: true,
         transfers: {
           take: 1,
