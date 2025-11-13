@@ -54,13 +54,37 @@ export interface SimplifiedRate {
 
 export interface ProcessedMoniepointRates {
   moniepoint: SimplifiedRate;
-  nala: SimplifiedRate | null;
-  lemfi: SimplifiedRate | null;
-  sendApp: SimplifiedRate | null;
+  nala: SimplifiedRate;
+  lemfi: SimplifiedRate;
+  sendApp: SimplifiedRate;
 }
 
 const MONIEPOINT_URL =
   "https://fx-apis.moniepoint.com/marketing/api/v1/fx-rates?sourceCurrency=GBP&targetCurrency=NGN";
+
+const DEFAULT_RATES: { [key: string]: SimplifiedRate } = {
+  nala: {
+    provider: "Nala",
+    rate: 1895,
+    retrievedRelative: "Fallback (Static)",
+    rateRetrievalMessage:
+      "Rate not available from API; using default fallback.",
+  },
+  lemfi: {
+    provider: "LemFi",
+    rate: 1900,
+    retrievedRelative: "Fallback (Static)",
+    rateRetrievalMessage:
+      "Rate not available from API; using default fallback.",
+  },
+  sendApp: {
+    provider: "Send App",
+    rate: 1885,
+    retrievedRelative: "Fallback (Static)",
+    rateRetrievalMessage:
+      "Rate not available from API; using default fallback.",
+  },
+};
 
 const makeMoniepointRequest =
   async (): Promise<MoniepointRateResponse | null> => {
@@ -113,8 +137,8 @@ export const fetchAggregatedFxRates =
 
     return {
       moniepoint: moniepointRate,
-      nala: competitorRatesMap.get("Nala") || null,
-      lemfi: competitorRatesMap.get("LemFi") || null,
-      sendApp: competitorRatesMap.get("Send App") || null,
+      nala: competitorRatesMap.get("Nala") || DEFAULT_RATES.nala,
+      lemfi: competitorRatesMap.get("LemFi") || DEFAULT_RATES.lemfi,
+      sendApp: competitorRatesMap.get("Send App") || DEFAULT_RATES.sendApp,
     };
   };
