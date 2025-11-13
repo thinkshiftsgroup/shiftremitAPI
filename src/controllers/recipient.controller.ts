@@ -46,6 +46,7 @@ export const createRecipientController = async (
       recipientEmail,
       recipientMobileNumber,
       isRecipientBusinessAccount,
+      purpose,
       sortCode,
     } = req.body;
 
@@ -54,11 +55,9 @@ export const createRecipientController = async (
     }
 
     if (!recipientBankName || !recipientAccountNumber || !recipientFullName) {
-      return res
-        .status(400)
-        .json({
-          message: "Bank name, account number, and full name are required.",
-        });
+      return res.status(400).json({
+        message: "Bank name, account number, and full name are required.",
+      });
     }
 
     const newRecipient = await createRecipient(userId, {
@@ -68,6 +67,7 @@ export const createRecipientController = async (
       recipientEmail,
       recipientMobileNumber,
       isRecipientBusinessAccount: isRecipientBusinessAccount || false,
+      purpose,
       sortCode,
     });
 

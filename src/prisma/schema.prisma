@@ -131,7 +131,7 @@ model Recipient {
   recipientMobileNumber      String?
   isRecipientBusinessAccount Boolean        @default(false)
   sortCode                   String?
-
+  purpose                    String?
   user                       User           @relation(fields: [userId], references: [id])
   
   createdAt                  DateTime       @default(now())

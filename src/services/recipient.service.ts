@@ -16,8 +16,8 @@ export const fetchRecentRecipients = async (
 
   if (nameFilter) {
     recipientWhereClause.recipientFullName = {
-      $regex: nameFilter,
-      $options: "i",
+      contains: nameFilter,
+      mode: "insensitive",
     };
   }
 
@@ -71,6 +71,7 @@ export const createRecipient = async (
         recipientEmail: data.recipientEmail,
         recipientMobileNumber: data.recipientMobileNumber,
         isRecipientBusinessAccount: data.isRecipientBusinessAccount,
+        purpose: data.purpose,
         sortCode: data.sortCode,
       },
     });

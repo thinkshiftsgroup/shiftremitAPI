@@ -44,15 +44,15 @@ export const getAllUsers = async (
   } = options;
   const skip = (page - 1) * limit;
 
-  let orderBy: any = {};
   let where: any = {};
+  let prismaOrderBy: any = {};
 
   if (sortByDate === "asc") {
-    orderBy = { createdAt: "asc" };
+    prismaOrderBy = { createdAt: "asc" };
   } else if (sortByDate === "desc") {
-    orderBy = { createdAt: "desc" };
+    prismaOrderBy = { createdAt: "desc" };
   } else {
-    orderBy = { createdAt: "desc" };
+    prismaOrderBy = { createdAt: "desc" };
   }
 
   if (startDate || endDate) {
@@ -69,8 +69,8 @@ export const getAllUsers = async (
 
   if (name) {
     where.fullName = {
-      $regex: name,
-      $options: "i",
+      contains: name,
+      mode: "insensitive",
     };
   }
 
@@ -80,26 +80,21 @@ export const getAllUsers = async (
 
   const [usersWithRelations, totalCount] = await Promise.all([
     prisma.user.findMany({
-      skip: skip,
-      take: limit,
       where: where,
-      orderBy: orderBy,
+      orderBy: prismaOrderBy,
       include: {
         individualAccountDoc: true,
         kycSubmission: true,
         transfers: {
           take: 1,
-          orderBy: [
-            ...(sortByAmount ? [{ amount: sortByAmount }] : []),
-            { createdAt: "desc" },
-          ],
+          orderBy: { createdAt: "desc" },
         },
       },
     }),
     prisma.user.count({ where: where }),
   ]);
 
-  const detailedUsers: DetailedUser[] = usersWithRelations.map((user) => {
+  let detailedUsers: DetailedUser[] = usersWithRelations.map((user) => {
     const lastTransaction =
       user.transfers.length > 0 ? user.transfers[0] : null;
 
@@ -110,6 +105,22 @@ export const getAllUsers = async (
       lastTransaction: lastTransaction,
     } as DetailedUser;
   });
+
+  if (sortByAmount) {
+    detailedUsers.sort((a, b) => {
+      const amountA = a.lastTransaction?.amount || 0;
+      const amountB = b.lastTransaction?.amount || 0;
+
+      if (sortByAmount === "asc") {
+        return amountA - amountB;
+      } else {
+        return amountB - amountA;
+      }
+    });
+    detailedUsers = detailedUsers.slice(skip, skip + limit);
+  } else {
+    detailedUsers = detailedUsers.slice(skip, skip + limit);
+  }
 
   return { users: detailedUsers, totalCount: totalCount };
 };
