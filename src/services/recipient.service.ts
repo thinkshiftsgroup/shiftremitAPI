@@ -56,34 +56,42 @@ export const fetchRecentRecipients = async (
 
   return recentRecipients;
 };
-
 export const createRecipient = async (
   userId: string,
   data: Omit<PrismaRecipient, "id" | "userId" | "createdAt" | "updatedAt">
 ): Promise<PrismaRecipient> => {
-  try {
-    const newRecipient = await prisma.recipient.create({
-      data: {
+  const existingRecipient = await prisma.recipient.findUnique({
+    where: {
+      userId_recipientAccountNumber_recipientBankName: {
         userId: userId,
-        recipientBankName: data.recipientBankName,
         recipientAccountNumber: data.recipientAccountNumber,
-        recipientFullName: data.recipientFullName,
-        recipientEmail: data.recipientEmail,
-        recipientMobileNumber: data.recipientMobileNumber,
-        isRecipientBusinessAccount: data.isRecipientBusinessAccount,
-        purpose: data.purpose,
-        sortCode: data.sortCode,
+        recipientBankName: data.recipientBankName,
       },
-    });
-    return newRecipient;
-  } catch (error) {
-    if ((error as any).code === "P2002") {
-      throw new Error(
-        "A recipient with this account number and bank name already exists for this user."
-      );
-    }
-    throw error;
+    },
+    select: { id: true },
+  });
+
+  if (existingRecipient) {
+    throw new Error(
+      "A recipient with this account number and bank name already exists for this user."
+    );
   }
+
+  const newRecipient = await prisma.recipient.create({
+    data: {
+      userId: userId,
+      recipientBankName: data.recipientBankName,
+      recipientAccountNumber: data.recipientAccountNumber,
+      recipientFullName: data.recipientFullName,
+      recipientEmail: data.recipientEmail,
+      recipientMobileNumber: data.recipientMobileNumber,
+      isRecipientBusinessAccount: data.isRecipientBusinessAccount,
+      purpose: data.purpose,
+      sortCode: data.sortCode,
+    },
+  });
+
+  return newRecipient;
 };
 
 export const updateRecipient = async (
@@ -93,6 +101,25 @@ export const updateRecipient = async (
     Omit<PrismaRecipient, "id" | "userId" | "createdAt" | "updatedAt">
   >
 ): Promise<PrismaRecipient> => {
+  if (data.recipientAccountNumber && data.recipientBankName) {
+    const conflictRecipient = await prisma.recipient.findFirst({
+      where: {
+        userId: userId,
+        recipientAccountNumber: data.recipientAccountNumber,
+        recipientBankName: data.recipientBankName,
+        NOT: {
+          id: recipientId,
+        },
+      },
+      select: { id: true },
+    });
+
+    if (conflictRecipient) {
+      throw new Error(
+        "A different recipient already exists with this account number and bank name for this user."
+      );
+    }
+  }
   const updatedRecipient = await prisma.recipient.update({
     where: {
       id: recipientId,
@@ -102,7 +129,6 @@ export const updateRecipient = async (
   });
   return updatedRecipient;
 };
-
 export const deleteRecipient = async (
   recipientId: string,
   userId: string
