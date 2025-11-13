@@ -42,6 +42,7 @@ model User {
   individualAccountDoc  IndividualAccountDoc?
   kycSubmission         IndividualKYC? 
   transfers             BankTransfer[]
+  recipients              Recipient[]
 }
 
 model Biodata {
@@ -119,6 +120,27 @@ model BankTransfer {
   user                       User             @relation(fields: [userId], references: [id])
   conversionRate             Float?
 }
+
+model Recipient {
+  id                         String         @id @default(auto()) @map("_id") @db.ObjectId
+  userId                     String         @db.ObjectId
+  recipientBankName          String
+  recipientAccountNumber     String
+  recipientFullName          String
+  recipientEmail             String?
+  recipientMobileNumber      String?
+  isRecipientBusinessAccount Boolean        @default(false)
+  sortCode                   String?
+
+  user                       User           @relation(fields: [userId], references: [id])
+  
+  createdAt                  DateTime       @default(now())
+  updatedAt                  DateTime       @updatedAt
+
+  @@unique([userId, recipientAccountNumber, recipientBankName]) 
+}
+
+
 
 model AccountData {
   id                 String    @id @default(auto()) @map("_id") @db.ObjectId
