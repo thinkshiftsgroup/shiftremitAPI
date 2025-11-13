@@ -9,12 +9,13 @@ export const getRecentRecipientsController = async (
   try {
     const userId = (req as any).user.id;
     const limit = parseInt(req.query.limit as string) || 10;
+    const nameFilter = req.query.name as string | undefined;
 
     if (!userId) {
       return res.status(401).json({ message: "Authentication required." });
     }
 
-    const recipients = await fetchRecentRecipients(userId, limit);
+    const recipients = await fetchRecentRecipients(userId, limit, nameFilter);
 
     res.status(200).json({
       message: "Recent recipients fetched successfully.",

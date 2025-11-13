@@ -13,13 +13,22 @@ interface Recipient {
 
 export const fetchRecentRecipients = async (
   userId: string,
-  limit: number = 10
+  limit: number = 10,
+  nameFilter?: string
 ): Promise<Recipient[]> => {
+  let whereClause: any = {
+    userId: userId,
+  };
+
+  if (nameFilter) {
+    whereClause.recipientFullName = {
+      $regex: nameFilter,
+      $options: "i",
+    };
+  }
+
   const transfers = await prisma.bankTransfer.findMany({
-    where: {
-      userId: userId,
-      //   status: TransferStatus.COMPLETED,
-    },
+    where: whereClause,
     select: {
       recipientBankName: true,
       recipientAccountNumber: true,
