@@ -1,108 +1,326 @@
+import { prisma } from "../prisma";
+import { User, Biodata } from "@prisma/client";
+import * as bcrypt from "bcryptjs";
+import * as jwt from "jsonwebtoken";
+import { generateSixDigitCode } from "../utils/codeGenerator";
 import {
-  PrismaClient,
-  User,
-  IndividualAccountDoc,
-  BankTransfer,
-  IndividualKYC,
-} from "@prisma/client";
+  sendVerificationCodeEmail,
+  sendPasswordResetCodeEmail,
+} from "../utils/email";
 
-const prisma = new PrismaClient();
+const getExpiry = (minutes: number): Date => {
+  const expiry = new Date();
+  expiry.setMinutes(expiry.getMinutes() + minutes);
+  return expiry;
+};
+const splitFullName = (fullName: string) => {
+  const parts = fullName.trim().split(/\s+/);
+  const firstname = parts[0] || "";
+  const lastname = parts.length > 1 ? parts.slice(1).join(" ") : "";
+  return { firstname, lastname };
+};
+type UserWithBiodata = Omit<User, "password"> & { biodata: Biodata | null };
 
-export interface DetailedUser extends User {
-  individualAccountDoc: IndividualAccountDoc | null;
-  kycSubmission: IndividualKYC | null;
-  lastTransaction: BankTransfer | null;
-}
-
-export interface UserWithDocs extends User {
-  individualAccountDoc: IndividualAccountDoc | null;
-}
-
-export interface UserQueryOptions {
-  page: number;
-  limit: number;
-  sortByAmount?: "asc" | "desc";
-  sortByDate?: "asc" | "desc";
-  startDate?: Date;
-  endDate?: Date;
-}
-
-export const getAllUsers = async (
-  options: UserQueryOptions
-): Promise<{ users: DetailedUser[]; totalCount: number }> => {
-  const { page, limit, sortByAmount, sortByDate, startDate, endDate } = options;
-  const skip = (page - 1) * limit;
-
-  let orderBy: any = {};
-  let where: any = {};
-
-  if (sortByDate === "asc") {
-    orderBy = { createdAt: "asc" };
-  } else if (sortByDate === "desc") {
-    orderBy = { createdAt: "desc" };
-  } else {
-    orderBy = { createdAt: "desc" };
-  }
-
-  if (startDate || endDate) {
-    where.createdAt = {};
-    if (startDate) {
-      where.createdAt.gte = startDate;
-    }
-    if (endDate) {
-      const nextDay = new Date(endDate);
-      nextDay.setDate(nextDay.getDate() + 1);
-      where.createdAt.lt = nextDay;
-    }
-  }
-
-  const [usersWithRelations, totalCount] = await Promise.all([
-    prisma.user.findMany({
-      skip: skip,
-      take: limit,
-      where: where,
-      orderBy: orderBy,
-      include: {
-        // individualAccountDoc: true,
-        kycSubmission: true,
-        transfers: {
-          take: 1,
-          orderBy: [
-            ...(sortByAmount ? [{ amount: sortByAmount }] : []),
-            { createdAt: "desc" },
-          ],
-        },
-      },
-    }),
-    prisma.user.count({ where: where }),
-  ]);
-
-  const detailedUsers: DetailedUser[] = usersWithRelations.map((user) => {
-    const lastTransaction =
-      user.transfers.length > 0 ? user.transfers[0] : null;
-
-    const { transfers, ...userWithoutTransfers } = user;
-
-    return {
-      ...userWithoutTransfers,
-      lastTransaction: lastTransaction,
-    } as DetailedUser;
-  });
-
-  return { users: detailedUsers, totalCount: totalCount };
+const generateAuthToken = (user: {
+  id: string;
+  email: string;
+  username: string | null;
+  isVerified: boolean;
+  userType: string;
+}): string => {
+  const secret = process.env.JWT_SECRET || "YOUR_UNSAFE_DEFAULT_SECRET";
+  return jwt.sign(
+    {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      isVerified: user.isVerified,
+      userType: user.userType,
+    },
+    secret,
+    { expiresIn: "7d" }
+  );
 };
 
-export const getUserWithDocs = async (
-  userId: string
-): Promise<UserWithDocs | null> => {
-  const user = await prisma.user.findUnique({
-    where: {
-      id: userId,
-    },
-    include: {
-      individualAccountDoc: true,
+export const registerUser = async (
+  firstname: string,
+  lastname: string,
+  email: string,
+  username: string,
+  password: string,
+  phone?: string
+): Promise<{
+  user: Omit<User, "password"> & { biodata: Biodata | null };
+  token: string;
+}> => {
+  const existingUser = await prisma.user.findUnique({ where: { email } });
+  if (existingUser) {
+    throw new Error("User with this email already exists.");
+  }
+  const fullName = `${firstname.trim()} ${lastname.trim()}`.trim();
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const verificationCode = generateSixDigitCode();
+  const verificationCodeExpires = getExpiry(15);
+
+  const newUser = await prisma.user.create({
+    data: {
+      fullName,
+      email,
+      username,
+      firstname,
+      lastname,
+      password: hashedPassword,
+      verificationCode,
+      verificationCodeExpires,
+      userType: "user",
     },
   });
 
-  return user as UserWithDocs | null;
+  const token = generateAuthToken(newUser);
+
+  const { password: _, ...userWithoutPassword } = newUser;
+  const newBiodata = await prisma.biodata.create({
+    data: {
+      userId: newUser.id,
+      dateOfBirth: new Date(),
+      phone: phone,
+      headline: `A new member, ${
+        newUser.fullName || newUser.email
+      }, has joined!`,
+    },
+  });
+
+  const userWithBiodata: UserWithBiodata = {
+    ...userWithoutPassword,
+    biodata: newBiodata,
+  };
+  await sendVerificationCodeEmail(
+    newUser.email,
+    verificationCode,
+    newUser.fullName
+  );
+
+  return { user: userWithBiodata, token };
+};
+
+export const registerAdminOrPartner = async (
+  firstname: string,
+  lastname: string,
+  email: string,
+  username: string,
+  password: string,
+  userType: "admin" | "partner",
+  phone?: string
+): Promise<{
+  user: Omit<User, "password"> & { biodata: Biodata | null };
+  token: string;
+}> => {
+  const existingUser = await prisma.user.findUnique({ where: { email } });
+  if (existingUser) {
+    throw new Error("User with this email already exists.");
+  }
+
+  if (userType !== "admin" && userType !== "partner") {
+    throw new Error(
+      "Invalid user type specified for this registration service."
+    );
+  }
+
+  const fullName = `${firstname.trim()} ${lastname.trim()}`.trim();
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const verificationCode = generateSixDigitCode();
+  const verificationCodeExpires = getExpiry(15);
+
+  const newUser = await prisma.user.create({
+    data: {
+      fullName,
+      email,
+      username,
+      firstname,
+      lastname,
+      password: hashedPassword,
+      verificationCode,
+      verificationCodeExpires,
+      userType: userType,
+      isVerified: true,
+    },
+  });
+
+  const token = generateAuthToken(newUser);
+
+  const { password: _, ...userWithoutPassword } = newUser;
+  const newBiodata = await prisma.biodata.create({
+    data: {
+      userId: newUser.id,
+      dateOfBirth: new Date(),
+      phone: phone,
+      headline: `${userType === "admin" ? "Administrator" : "Partner"}, ${
+        newUser.fullName || newUser.email
+      }, has been registered!`,
+    },
+  });
+
+  const userWithBiodata: UserWithBiodata = {
+    ...userWithoutPassword,
+    biodata: newBiodata,
+  };
+
+  return { user: userWithBiodata, token };
+};
+
+export const verifyEmail = async (
+  email: string,
+  code: string
+): Promise<{ token: string; user: Omit<User, "password"> }> => {
+  const user = await prisma.user.findUnique({ where: { email } });
+
+  if (!user) {
+    throw new Error("User not found.");
+  }
+
+  if (user.isVerified) {
+    throw new Error("Email is already verified.");
+  }
+
+  if (
+    user.verificationCode !== code ||
+    user.verificationCodeExpires! < new Date()
+  ) {
+    throw new Error("Invalid or expired verification code.");
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: { email },
+    data: {
+      isVerified: true,
+      verificationCode: null,
+      verificationCodeExpires: null,
+    },
+    include: {
+      biodata: true,
+    },
+  });
+
+  const token = generateAuthToken(updatedUser);
+
+  const { password: _, ...userWithoutPassword } = updatedUser;
+
+  return { user: userWithoutPassword, token };
+};
+
+export const resendVerificationCode = async (email: string): Promise<void> => {
+  const user = await prisma.user.findUnique({ where: { email } });
+
+  if (!user) {
+    console.log(`Resend requested for non-existent email: ${email}`);
+    throw new Error("User not found.");
+  }
+
+  if (user.isVerified) {
+    throw new Error("Email is already verified. Please log in.");
+  }
+
+  const newVerificationCode = generateSixDigitCode();
+  const newVerificationCodeExpires = getExpiry(15);
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      verificationCode: newVerificationCode,
+      verificationCodeExpires: newVerificationCodeExpires,
+    },
+  });
+
+  await sendVerificationCodeEmail(
+    user.email,
+    newVerificationCode,
+    user.fullName
+  );
+};
+
+export const loginUser = async (
+  email: string,
+  password: string
+): Promise<{ user: Omit<User, "password">; token: string }> => {
+  const user = await prisma.user.findUnique({
+    where: { email },
+    include: { biodata: true },
+  });
+  if (!user) {
+    throw new Error("Invalid credentials.");
+  }
+
+  if (!user.isVerified) {
+    throw new Error("Please verify your email address first.");
+  }
+
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+
+  if (!isPasswordValid) {
+    throw new Error("Invalid credentials.");
+  }
+
+  const token = generateAuthToken(user);
+
+  const { password: _, ...userWithBiodata } = user;
+
+  return { user: userWithBiodata, token };
+};
+
+export const forgotPassword = async (email: string): Promise<void> => {
+  const user = await prisma.user.findUnique({ where: { email } });
+
+  if (!user) {
+    console.log(`Password reset requested for non-existent email: ${email}`);
+    return;
+  }
+
+  const resetCode = generateSixDigitCode();
+  const resetExpires = getExpiry(15);
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      resetPasswordToken: resetCode,
+      resetPasswordExpires: resetExpires,
+    },
+  });
+
+  await sendPasswordResetCodeEmail(user.email, resetCode, user.fullName);
+};
+
+export const resetPassword = async (
+  email: string,
+  code: string,
+  newPassword: string
+): Promise<Omit<User, "password">> => {
+  const user = await prisma.user.findUnique({ where: { email } });
+
+  if (!user) {
+    throw new Error("User not found.");
+  }
+
+  if (
+    user.resetPasswordToken !== code ||
+    user.resetPasswordExpires! < new Date()
+  ) {
+    throw new Error("Invalid or expired password reset code.");
+  }
+
+  const newHashedPassword = await bcrypt.hash(newPassword, 10);
+
+  const updatedUser = await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      password: newHashedPassword,
+      resetPasswordToken: null,
+      resetPasswordExpires: null,
+    },
+  });
+
+  const { password: _, ...userWithoutPassword } = updatedUser;
+
+  return userWithoutPassword;
 };

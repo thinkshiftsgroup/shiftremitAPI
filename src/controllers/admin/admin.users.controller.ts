@@ -63,8 +63,8 @@ export const listAllUsers = async (req: Request, res: Response) => {
     sortByDate,
     startDate,
     endDate,
-    name,
-    isVerified,
+    name, // This property must exist in the imported UserQueryOptions
+    isVerified, // This property must exist in the imported UserQueryOptions
   };
 
   try {
