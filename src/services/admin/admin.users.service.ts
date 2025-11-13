@@ -18,7 +18,6 @@ export interface UserWithDocs extends User {
   individualAccountDoc: IndividualAccountDoc | null;
 }
 
-//use query options for filtering, sorting, and pagination
 export interface UserQueryOptions {
   page: number;
   limit: number;
