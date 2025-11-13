@@ -18,6 +18,23 @@ export const listAllUsers = async (req: Request, res: Response) => {
   const sortByAmount = req.query.sortByAmount as "asc" | "desc" | undefined;
   const sortByDate = req.query.sortByDate as "asc" | "desc" | undefined;
 
+  const name = req.query.name as string | undefined;
+  const isVerifiedQuery = req.query.isVerified as string | undefined;
+
+  let isVerified: boolean | undefined;
+  if (isVerifiedQuery !== undefined) {
+    const lowerCaseValue = isVerifiedQuery.toLowerCase();
+    if (lowerCaseValue === "true") {
+      isVerified = true;
+    } else if (lowerCaseValue === "false") {
+      isVerified = false;
+    } else {
+      return res
+        .status(400)
+        .json({ message: "isVerified filter must be 'true' or 'false'" });
+    }
+  }
+
   let startDate: Date | undefined;
   let endDate: Date | undefined;
 
@@ -46,6 +63,8 @@ export const listAllUsers = async (req: Request, res: Response) => {
     sortByDate,
     startDate,
     endDate,
+    name,
+    isVerified,
   };
 
   try {
