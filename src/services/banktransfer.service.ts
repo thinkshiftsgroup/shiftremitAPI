@@ -7,7 +7,7 @@ import {
   generateEmailHeader,
 } from "./admin/admin.transfers.service";
 const ADMIN_EMAIL = "finance@shiftremit.com";
-import { FilterOptions, UserKpis } from "src/types/Transfers";
+import { FilterOptions } from "src/types/Transfers";
 
 interface BankTransferInput {
   amount: number;
@@ -345,6 +345,19 @@ export const createBankTransfer = async (
 
   return { accountDetails: finalAccountDetails, transferReference };
 };
+type UserKpis = {
+  totalTransfers: number;
+  totalCompleted: number;
+  totalPending: number;
+  totalFailed: number;
+  totalSentGBP: number;
+  totalPendingSentGBP: number;
+  totalCompletedSentGBP: number;
+  totalSentNGN: number;
+  totalPendingSentNGN: number;
+  totalCompletedSentNGN: number;
+  lastTransferDate: Date | null;
+};
 
 export const fetchUserTransfers = async (
   userId: string,
@@ -385,7 +398,7 @@ export const fetchUserTransfers = async (
   if (currency === "GBP") {
     where.fromCurrency = "GBP";
   } else if (currency === "NGN") {
-    where.toCurrency = "NGN";
+    where.fromCurrency = "NGN";
   }
 
   if (status) {
@@ -406,54 +419,114 @@ export const fetchUserTransfers = async (
     }
   }
 
-  const allUserTransfers = await prisma.bankTransfer.findMany({
-    where: { userId },
-    select: {
-      status: true,
-      amount: true,
-      createdAt: true,
-    },
-  });
+  const [
+    totalTransfersCount,
+    failedCount,
+    lastTransfer,
+    totalSentGBPResult,
+    pendingSentGBPResult,
+    completedSentGBPResult,
+    totalSentNGNResult,
+    pendingSentNGNResult,
+    completedSentNGNResult,
+  ] = await prisma.$transaction([
+    prisma.bankTransfer.count({ where }),
+    prisma.bankTransfer.count({
+      where: {
+        ...where,
+        status: {
+          in: [
+            TransferStatus.FAILED,
+            TransferStatus.REJECTED,
+            TransferStatus.CANCELED,
+          ],
+        },
+      },
+    }),
+    prisma.bankTransfer.findFirst({
+      where,
+      orderBy: { createdAt: "desc" },
+      select: { createdAt: true },
+    }),
 
-  const kpis: UserKpis = allUserTransfers.reduce(
-    (acc, transfer) => {
-      acc.totalTransfers += 1;
-      acc.totalAmountSentGBP += transfer.amount;
+    prisma.bankTransfer.aggregate({
+      _sum: { amount: true },
+      where: {
+        ...where,
+        fromCurrency: "GBP",
+        status: { not: TransferStatus.CANCELED },
+      },
+    }),
 
-      if (
-        transfer.status === TransferStatus.PENDING ||
-        transfer.status === TransferStatus.PROCESSING
-      ) {
-        acc.totalPending += 1;
-        acc.totalAmountPendingGBP += transfer.amount;
-      } else if (transfer.status === TransferStatus.COMPLETED) {
-        acc.totalCompleted += 1;
-        acc.totalAmountCompletedGBP += transfer.amount;
-      } else if (
-        transfer.status === TransferStatus.FAILED ||
-        transfer.status === TransferStatus.REJECTED ||
-        transfer.status === TransferStatus.CANCELED
-      ) {
-        acc.totalFailed += 1;
-      }
+    prisma.bankTransfer.aggregate({
+      _sum: { amount: true },
+      where: {
+        ...where,
+        fromCurrency: "GBP",
+        status: { in: [TransferStatus.PENDING, TransferStatus.PROCESSING] },
+      },
+    }),
 
-      if (!acc.lastTransferDate || transfer.createdAt > acc.lastTransferDate) {
-        acc.lastTransferDate = transfer.createdAt;
-      }
+    prisma.bankTransfer.aggregate({
+      _sum: { amount: true },
+      where: {
+        ...where,
+        fromCurrency: "GBP",
+        status: TransferStatus.COMPLETED,
+      },
+    }),
 
-      return acc;
-    },
-    {
-      totalTransfers: 0,
-      totalCompleted: 0,
-      totalPending: 0,
-      totalFailed: 0,
-      totalAmountSentGBP: 0,
-      totalAmountPendingGBP: 0,
-      totalAmountCompletedGBP: 0,
-      lastTransferDate: null,
-    } as UserKpis
-  );
+    prisma.bankTransfer.aggregate({
+      _sum: { amount: true },
+      where: {
+        ...where,
+        fromCurrency: "NGN",
+        status: { not: TransferStatus.CANCELED },
+      },
+    }),
+
+    prisma.bankTransfer.aggregate({
+      _sum: { amount: true },
+      where: {
+        ...where,
+        fromCurrency: "NGN",
+        status: { in: [TransferStatus.PENDING, TransferStatus.PROCESSING] },
+      },
+    }),
+
+    prisma.bankTransfer.aggregate({
+      _sum: { amount: true },
+      where: {
+        ...where,
+        fromCurrency: "NGN",
+        status: TransferStatus.COMPLETED,
+      },
+    }),
+  ]);
+
+  const getSum = (result: any) =>
+    parseFloat((result._sum.amount ?? 0).toFixed(2));
+  const getCount = (result: any) =>
+    parseFloat((result._sum.amount ?? 0).toFixed(0));
+
+  const kpis: UserKpis = {
+    totalTransfers: totalTransfersCount,
+    totalFailed: failedCount,
+    lastTransferDate: lastTransfer?.createdAt ?? null,
+
+    totalSentGBP: getSum(totalSentGBPResult),
+    totalPendingSentGBP: getSum(pendingSentGBPResult),
+    totalCompletedSentGBP: getSum(completedSentGBPResult),
+
+    totalSentNGN: getSum(totalSentNGNResult),
+    totalPendingSentNGN: getSum(pendingSentNGNResult),
+    totalCompletedSentNGN: getSum(completedSentNGNResult),
+
+    totalCompleted:
+      getCount(completedSentGBPResult) + getCount(completedSentNGNResult),
+    totalPending:
+      getCount(pendingSentGBPResult) + getCount(pendingSentNGNResult),
+  };
 
   const [transfers, totalFilteredTransfers] = await prisma.$transaction([
     prisma.bankTransfer.findMany({
