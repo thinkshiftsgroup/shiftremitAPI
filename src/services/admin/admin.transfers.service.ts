@@ -212,6 +212,27 @@ const generateRecipientNotificationEmailHtml = (
   `;
 };
 
+type TransferSelect = {
+  status: TransferStatus;
+  amount: number;
+  convertedNGNAmount: number | null;
+};
+
+type KpiAccumulator = {
+  totalTransactions: number;
+  totalCompleted: number;
+  totalAbandoned: number;
+  totalPending: number;
+  totalFailed: number;
+  totalRejected: number;
+  totalCanceled: number;
+  totalProcessing: number;
+};
+
+type TotalsAccumulator = {
+  totalAmountGBP: number;
+  totalAmountNGN: number;
+};
 export const fetchAllTransfers = async (
   page: number = 1,
   limit: number = 10
@@ -299,17 +320,95 @@ export const fetchDashboardData = async (
     }
   }
 
-  const allMatchingTransfers = await prisma.bankTransfer.findMany({
-    where: where,
-    select: {
-      status: true,
-      amount: true,
-      convertedNGNAmount: true,
-    },
-  });
+  const [
+    allMatchingTransfers,
+    totalSentGBPResult,
+    totalReceivedGBPResult,
+    totalSentNGNResult,
+    totalReceivedNGNResult,
+    totalPendingSentAmountGBPResult,
+    totalPendingSentAmountNGNResult,
+  ] = await prisma.$transaction([
+    prisma.bankTransfer.findMany({
+      where: where,
+      select: {
+        status: true,
+        amount: true,
+        convertedNGNAmount: true,
+      } as const,
+    }),
+    prisma.bankTransfer.aggregate({
+      _sum: { amount: true },
+      where: {
+        ...where,
+        fromCurrency: "GBP",
+        status: { not: "CANCELED" },
+      },
+    }),
+    prisma.bankTransfer.aggregate({
+      _sum: { convertedGBPAmount: true },
+      where: {
+        ...where,
+        toCurrency: "GBP",
+        status: { in: ["COMPLETED", "PROCESSING"] },
+      },
+    }),
+    prisma.bankTransfer.aggregate({
+      _sum: { amount: true },
+      where: {
+        ...where,
+        fromCurrency: "NGN",
+        status: { not: "CANCELED" },
+      },
+    }),
+    prisma.bankTransfer.aggregate({
+      _sum: { convertedNGNAmount: true },
+      where: {
+        ...where,
+        toCurrency: "NGN",
+        status: { in: ["COMPLETED", "PROCESSING"] },
+      },
+    }),
+    prisma.bankTransfer.aggregate({
+      _sum: { amount: true },
+      where: {
+        ...where,
+        fromCurrency: "GBP",
+        status: "PENDING",
+      },
+    }),
+    prisma.bankTransfer.aggregate({
+      _sum: { amount: true },
+      where: {
+        ...where,
+        fromCurrency: "NGN",
+        status: "PENDING",
+      },
+    }),
+  ]);
 
-  const kpis = allMatchingTransfers.reduce(
-    (acc, transfer) => {
+  const totalSentGBP = totalSentGBPResult._sum.amount ?? 0;
+  const totalReceivedGBP = totalReceivedGBPResult._sum.convertedGBPAmount ?? 0;
+  const totalSentNGN = totalSentNGNResult._sum.amount ?? 0;
+  const totalReceivedNGN = totalReceivedNGNResult._sum.convertedNGNAmount ?? 0;
+  const totalPendingSentAmountGBP =
+    totalPendingSentAmountGBPResult._sum.amount ?? 0;
+  const totalPendingSentAmountNGN =
+    totalPendingSentAmountNGNResult._sum.amount ?? 0;
+
+  const detailedTotals = {
+    totalSentGBP: parseFloat(totalSentGBP.toFixed(2)),
+    totalReceivedGBP: parseFloat(totalReceivedGBP.toFixed(2)),
+    totalSentNGN: parseFloat(totalSentNGN.toFixed(2)),
+    totalReceivedNGN: parseFloat(totalReceivedNGN.toFixed(2)),
+    totalPendingSentAmountGBP: parseFloat(totalPendingSentAmountGBP.toFixed(2)),
+    totalPendingSentAmountNGN: parseFloat(totalPendingSentAmountNGN.toFixed(2)),
+  };
+
+  const kpis: KpiAccumulator = (
+    allMatchingTransfers as TransferSelect[]
+  ).reduce(
+    (acc: KpiAccumulator, transfer: TransferSelect) => {
       acc.totalTransactions += 1;
 
       switch (transfer.status) {
@@ -350,8 +449,10 @@ export const fetchDashboardData = async (
     }
   );
 
-  const totals = allMatchingTransfers.reduce(
-    (acc, transfer) => {
+  const totals: TotalsAccumulator = (
+    allMatchingTransfers as TransferSelect[]
+  ).reduce(
+    (acc: TotalsAccumulator, transfer: TransferSelect) => {
       acc.totalAmountGBP += transfer.amount;
 
       acc.totalAmountNGN += transfer.convertedNGNAmount || 0;
@@ -394,7 +495,10 @@ export const fetchDashboardData = async (
   return {
     transfers,
     kpis,
-    totals,
+    totals: {
+      ...totals,
+      ...detailedTotals,
+    },
     pagination: {
       currentPage: page,
       totalPages: totalPages,
