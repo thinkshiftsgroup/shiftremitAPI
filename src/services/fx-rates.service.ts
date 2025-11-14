@@ -65,14 +65,14 @@ const MONIEPOINT_URL =
 const DEFAULT_RATES: { [key: string]: SimplifiedRate } = {
   nala: {
     provider: "Nala",
-    rate: 1895,
+    rate: 1896,
     retrievedRelative: "Fallback (Static)",
     rateRetrievalMessage:
       "Rate not available from API; using default fallback.",
   },
   lemfi: {
     provider: "LemFi",
-    rate: 1900,
+    rate: 1915,
     retrievedRelative: "Fallback (Static)",
     rateRetrievalMessage:
       "Rate not available from API; using default fallback.",
