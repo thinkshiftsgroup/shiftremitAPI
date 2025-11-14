@@ -18,7 +18,7 @@ import { individualKYCRouter } from "@routes/KYC/kyc.submission.route";
 import { adminTransferAccountRouter } from "@routes/admin/admin.transferaccount.route";
 import { adminTransferRouter } from "@routes/admin/admin.transfers.route";
 import { adminUsersRouter } from "@routes/admin/admin.user.route";
-import e from "express";
+import { adminDashboardRouter } from "@routes/admin/admin.dashboard.route";
 const app = express();
 
 const allowedOrigins = [
@@ -54,6 +54,7 @@ app.use("/api/admin/rates", adminRatesRouter);
 app.use("/api/admin/transfer-account", adminTransferAccountRouter);
 app.use("/api/admin/transfers", adminTransferRouter);
 app.use("/api/admin/users", adminUsersRouter);
+app.use("/api/admin/dashboard", adminDashboardRouter);
 
 app.get("/health", async (req: Request, res: Response) => {
   res.status(200).json({ status: "UP", message: "Service is healthy" });
