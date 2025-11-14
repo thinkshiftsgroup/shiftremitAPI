@@ -14,18 +14,30 @@ export const getRecentRecipientsController = async (
 ) => {
   try {
     const userId = (req as any).user.id;
-    const limit = parseInt(req.query.limit as string) || 10;
+    const pageSize = parseInt(req.query.pageSize as string) || 10;
+    const page = parseInt(req.query.page as string) || 1;
     const nameFilter = req.query.name as string | undefined;
 
     if (!userId) {
       return res.status(401).json({ message: "Authentication required." });
     }
 
-    const recipients = await fetchRecentRecipients(userId, limit, nameFilter);
+    const { recipients, totalCount, totalPages } = await fetchRecentRecipients(
+      userId,
+      page,
+      pageSize,
+      nameFilter
+    );
 
     res.status(200).json({
       message: "Recent recipients fetched successfully.",
       data: recipients,
+      meta: {
+        totalRecipients: totalCount,
+        totalPages: totalPages,
+        currentPage: page,
+        pageSize: pageSize,
+      },
     });
   } catch (error) {
     next(error);

@@ -5,11 +5,21 @@ interface RecipientWithRecency extends PrismaRecipient {
   lastTransferDate: Date;
 }
 
+interface PaginatedRecipients {
+  recipients: RecipientWithRecency[];
+  totalCount: number;
+  totalPages: number;
+}
+
 export const fetchRecentRecipients = async (
   userId: string,
-  limit: number = 10,
+  page: number = 1,
+  pageSize: number = 10,
   nameFilter?: string
-): Promise<RecipientWithRecency[]> => {
+): Promise<PaginatedRecipients> => {
+  const skip = (page - 1) * pageSize;
+  const limit = pageSize;
+
   let recipientWhereClause: any = {
     userId: userId,
   };
@@ -21,9 +31,10 @@ export const fetchRecentRecipients = async (
     };
   }
 
-  const recipients = await prisma.recipient.findMany({
-    where: recipientWhereClause,
-  });
+  const [totalCount, recipients] = await prisma.$transaction([
+    prisma.recipient.count({ where: recipientWhereClause }),
+    prisma.recipient.findMany({ where: recipientWhereClause }),
+  ]);
 
   const recipientsWithRecencyPromises = recipients.map(async (recipient) => {
     const latestTransfer = await prisma.bankTransfer.findFirst({
@@ -50,12 +61,21 @@ export const fetchRecentRecipients = async (
     recipientsWithRecencyPromises
   );
 
-  const recentRecipients = recipientsWithRecency
-    .sort((a, b) => b.lastTransferDate.getTime() - a.lastTransferDate.getTime())
-    .slice(0, limit);
+  const sortedRecipients = recipientsWithRecency.sort(
+    (a, b) => b.lastTransferDate.getTime() - a.lastTransferDate.getTime()
+  );
 
-  return recentRecipients;
+  const paginatedRecipients = sortedRecipients.slice(skip, skip + limit);
+
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  return {
+    recipients: paginatedRecipients,
+    totalCount,
+    totalPages,
+  };
 };
+
 export const createRecipient = async (
   userId: string,
   data: Omit<PrismaRecipient, "id" | "userId" | "createdAt" | "updatedAt">
