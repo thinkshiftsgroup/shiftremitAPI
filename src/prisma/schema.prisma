@@ -7,6 +7,26 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+
+enum DocStatus {
+  PENDING
+  APPROVED
+  IN_REVIEW
+  REJECTED
+}
+
+enum OverallDocStatus {
+  NOT_STARTED
+  PENDING_UPLOAD
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum EntityType {
+  NATURAL_PERSON
+  LEGAL_ENTITY
+}
 model User {
   id                    String                 @id @default(auto()) @map("_id") @db.ObjectId
   email                 String                 @unique
@@ -43,6 +63,7 @@ model User {
   kycSubmission         IndividualKYC? 
   transfers             BankTransfer[]
   recipients              Recipient[]
+  businessAccount         BusinessAccount?
 }
 
 model Biodata {
@@ -176,17 +197,125 @@ model IndividualAccountDoc {
   @@unique([userId])
 }
 
-enum DocStatus {
-  PENDING
-  APPROVED
-  IN_REVIEW
-  REJECTED
+
+
+model BusinessAccount {
+  id                                String                      @id @default(auto()) @map("_id") @db.ObjectId
+  userId                            String                      @unique @db.ObjectId
+
+  businessName                      String
+  companyType                       String?
+  businessModel                     String?
+  incorporationNumber               String                      @unique
+  dateOfIncorporation               DateTime?
+  countryOfIncorporation            String?
+  taxNumber                         String?
+  companyAddress                    String?
+  zipCodePostcode                   String?
+  stateProvince                     String?
+  city                              String?
+  whatDoesTheBusinessDo             String?
+  companyWebsite                    String?
+
+  dob                               DateTime?
+  mobileNumber                      String?
+  meansOfIdentification             String?
+  validIDNumber                     String?
+  idDate                            DateTime?
+  fullAddress                       String?
+  countryOfResidence                String?
+  purposeOfShiftremit               String?
+
+  user                              User                        @relation(fields: [userId], references: [id])
+  directors                         Director[]
+  shareholders                      Shareholder[]
+  peps                              PoliticallyExposedPerson[]
+  businessAccountDocs               BusinessAccountDoc?
+
+  createdAt                         DateTime                    @default(now())
+  updatedAt                         DateTime                    @updatedAt
 }
 
-enum OverallDocStatus {
-  NOT_STARTED
-  PENDING_UPLOAD
-  PENDING_REVIEW
-  APPROVED
-  REJECTED
+model Director {
+  id                                String                      @id @default(auto()) @map("_id") @db.ObjectId
+  businessAccountId                 String                      @db.ObjectId
+
+  firstname                         String
+  lastname                          String
+  position                          String?
+  dateOfBirth                       DateTime?
+  nationality                       String?
+  residentialAddress                String?
+
+  identificationDocument            String?
+  idNumber                          String?
+  issuedCountry                     String?
+  identificationDocumentProofUrl    String?
+  residentialAddressUrlProof        String?
+
+  isShareholder                     Boolean                     @default(false)
+  percentageShareholding            Float?
+
+  businessAccount                   BusinessAccount             @relation(fields: [businessAccountId], references: [id])
+}
+
+model Shareholder {
+  id                                String                      @id @default(auto()) @map("_id") @db.ObjectId
+  businessAccountId                 String                      @db.ObjectId
+  entityType                        EntityType                  @default(NATURAL_PERSON)
+
+  percentageSharesOwned             Float
+
+  firstname                         String?
+  lastname                          String?
+  dateOfBirth                       DateTime?
+  nationality                       String?
+  identificationDocument            String?
+  idNumber                          String?
+  issuedCountry                     String?
+  residentialAddress                String?
+  validIdUrl                        String?
+  proofOfAddressUrl                 String?
+  taxNumber                         String?
+
+  legalEntityName                   String?
+  countryOfRegistrationIncorporation String?
+  registrationIncorporationNumber   String?
+
+  businessAccount                   BusinessAccount             @relation(fields: [businessAccountId], references: [id])
+}
+
+model PoliticallyExposedPerson {
+  id                                String                      @id @default(auto()) @map("_id") @db.ObjectId
+  businessAccountId                 String                      @db.ObjectId
+
+  name                              String
+  position                          String?
+  pepStatusDescription              String?
+
+  businessAccount                   BusinessAccount             @relation(fields: [businessAccountId], references: [id])
+}
+
+model BusinessAccountDoc {
+  id                                String                      @id @default(auto()) @map("_id") @db.ObjectId
+  businessAccountId                 String                      @unique @db.ObjectId
+
+  businessRegistrationIncorporationCertificate String?
+  articleOfAssociation              String?
+  operatingBusinessUtilityBill      String?
+  companyStatusReports              String?
+  additionalDocument                String?
+
+  registrationCertificateStatus     DocStatus                   @default(PENDING)
+  articleOfAssociationStatus        DocStatus                   @default(PENDING)
+  utilityBillStatus                 DocStatus                   @default(PENDING)
+  companyStatusReportsStatus        DocStatus                   @default(PENDING)
+  additionalDocumentStatus          DocStatus                   @default(PENDING)
+
+  overallStatus                     OverallDocStatus            @default(PENDING_UPLOAD)
+
+  businessAccount                   BusinessAccount             @relation(fields: [businessAccountId], references: [id])
+
+  createdAt                         DateTime                    @default(now())
+  updatedAt                         DateTime                    @updatedAt
 }
