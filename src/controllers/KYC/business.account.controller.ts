@@ -18,6 +18,7 @@ import {
   docMapping,
   DocumentType,
   uploadAndSaveBusinessDocuments,
+  removeBusinessDocumentByType,
 } from "@services/KYC/business.account.document.service";
 import { Prisma } from "@prisma/client";
 
@@ -199,7 +200,9 @@ export const deleteDirectorController = async (
 
     await deleteDirectorById(userId, directorId);
 
-    res.status(204).send();
+    res.status(200).json({
+      message: "Director deleted successfully",
+    });
   } catch (error) {
     next(error);
   }
@@ -220,7 +223,9 @@ export const deleteShareholderController = async (
 
     await deleteShareholderById(userId, shareholderId);
 
-    res.status(204).send();
+    res.status(200).json({
+      message: "Shareholder deleted successfully",
+    });
   } catch (error) {
     next(error);
   }
@@ -241,7 +246,34 @@ export const deletePEPController = async (
 
     await deletePEPById(userId, pepId);
 
-    res.status(204).send();
+    res.status(200).json({
+      message: "Pep deleted successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteBusinessDocumentController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = (req as any).user.id;
+    const docType = req.params.docType as DocumentType;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Authentication required." });
+    }
+
+    if (!docType) {
+      return res.status(400).json({ message: "Document type is required." });
+    }
+
+    const result = await removeBusinessDocumentByType(userId, docType);
+
+    res.status(200).json(result);
   } catch (error) {
     next(error);
   }

@@ -9,6 +9,7 @@ import {
   deleteDirectorController,
   deleteShareholderController,
   deletePEPController,
+  deleteBusinessDocumentController,
 } from "@controllers/KYC/business.account.controller";
 import { protect } from "@middlewares/auth.middleware";
 import asyncHandler from "@utils/asyncHandler";
@@ -57,4 +58,9 @@ router.delete(
   asyncHandler(deleteShareholderController)
 );
 router.delete("/peps/:pepId", asyncHandler(deletePEPController));
+
+router.delete(
+  "/documents/:docType",
+  asyncHandler(deleteBusinessDocumentController)
+);
 export const businessAccountRouter = router;

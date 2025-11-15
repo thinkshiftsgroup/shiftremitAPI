@@ -1,6 +1,6 @@
 import { MulterFile } from "src/types/Upload";
 import { uploadMultipleToCloudinary } from "@utils/cloudinary";
-import { DocStatus } from "@prisma/client";
+import { DocStatus, OverallDocStatus } from "@prisma/client";
 import prisma from "@config/db";
 
 export const docMapping = {
@@ -66,4 +66,39 @@ export const uploadAndSaveBusinessDocuments = async (
   }
 
   return { message: "Document uploaded and status set to IN_REVIEW.", docUrl };
+};
+
+export const removeBusinessDocumentByType = async (
+  userId: string,
+  docType: DocumentType
+): Promise<{ message: string }> => {
+  if (!docMapping.hasOwnProperty(docType)) {
+    throw new Error(`Invalid document type: ${docType}`);
+  }
+
+  const statusField = docMapping[docType];
+
+  const businessAccount = await prisma.businessAccount.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+
+  if (!businessAccount) {
+    throw new Error("Business account not found. Cannot remove document.");
+  }
+
+  const updateData: any = {
+    [docType]: null,
+    [statusField]: DocStatus.PENDING,
+    overallStatus: OverallDocStatus.PENDING_UPLOAD,
+  };
+
+  await prisma.businessAccountDoc.update({
+    where: { businessAccountId: businessAccount.id },
+    data: updateData,
+  });
+
+  return {
+    message: `Document '${docType}' removed and status reset to PENDING.`,
+  };
 };
