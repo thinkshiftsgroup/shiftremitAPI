@@ -8,6 +8,7 @@ import {
   BusinessAccountDoc,
   DocStatus,
   OverallDocStatus,
+  EntityType,
 } from "@prisma/client";
 import { MulterFile } from "src/types/Upload";
 import { uploadMultipleToCloudinary } from "@utils/cloudinary";
@@ -101,140 +102,207 @@ export const updateBusinessAccountFields = async (
     data: data as Prisma.BusinessAccountUpdateInput,
   });
 };
+
 export type DirectorPayloadData = Omit<
   Prisma.DirectorCreateInput,
-  "id" | "businessAccount" | "businessAccountId"
->;
+  "businessAccount"
+> & { id?: string };
 
-export const updateOrCreateDirector = async (
+export const upsertMultipleDirectors = async (
   userId: string,
-  directorId: string | null,
-  data: DirectorPayloadData,
-  documentFiles?: {
-    identificationDocumentProofUrl?: MulterFile[];
-    residentialAddressUrlProof?: MulterFile[];
-  }
-): Promise<Director> => {
+  directorsData: DirectorPayloadData[]
+): Promise<Director[]> => {
   const businessAccount = await prisma.businessAccount.findUnique({
     where: { userId },
+    select: { id: true },
   });
   if (!businessAccount) {
     throw new Error("Business account not found.");
   }
 
-  const uploadData: { [key: string]: string | null } = {};
+  const upsertPromises = directorsData.map((data) => {
+    const { id, ...payload } = data;
+    const createPayload = {
+      ...payload,
+      businessAccountId: businessAccount.id,
+      firstname: payload.firstname || "N/A",
+      lastname: payload.lastname || "N/A",
+    };
 
-  if (documentFiles?.identificationDocumentProofUrl?.[0]) {
-    uploadData.identificationDocumentProofUrl =
-      await uploadMultipleToCloudinary(
-        documentFiles.identificationDocumentProofUrl,
-        "raw"
-      ).then((urls) => urls[0]);
-  }
-  if (documentFiles?.residentialAddressUrlProof?.[0]) {
-    uploadData.residentialAddressUrlProof = await uploadMultipleToCloudinary(
-      documentFiles.residentialAddressUrlProof,
-      "raw"
-    ).then((urls) => urls[0]);
-  }
+    if (id) {
+      return prisma.director.update({
+        where: { id },
+        data: payload,
+      });
+    } else {
+      return prisma.director.create({
+        data: createPayload,
+      });
+    }
+  });
 
-  const payload = { ...data, ...uploadData };
-
-  if (directorId) {
-    return prisma.director.update({
-      where: { id: directorId },
-      data: payload,
-    });
-  } else {
-    return prisma.director.create({
-      data: {
-        ...payload,
-        businessAccountId: businessAccount.id,
-      },
-    });
-  }
+  return Promise.all(upsertPromises);
 };
 
 export type ShareholderPayloadData = Omit<
   Prisma.ShareholderCreateInput,
-  "id" | "businessAccount" | "businessAccountId"
->;
+  "businessAccount"
+> & { id?: string };
 
-export const updateOrCreateShareholder = async (
+export const upsertMultipleShareholders = async (
   userId: string,
-  shareholderId: string | null,
-  data: ShareholderPayloadData,
-  documentFiles?: {
-    validIdUrl?: MulterFile[];
-    proofOfAddressUrl?: MulterFile[];
+  shareholdersData: ShareholderPayloadData[]
+): Promise<Shareholder[]> => {
+  const businessAccount = await prisma.businessAccount.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+  if (!businessAccount) {
+    throw new Error("Business account not found.");
   }
+
+  const upsertPromises = shareholdersData.map((data) => {
+    const { id, ...payload } = data;
+    const createPayload = {
+      ...payload,
+      businessAccountId: businessAccount.id,
+      percentageSharesOwned: payload.percentageSharesOwned || 0,
+      entityType: payload.entityType || EntityType.NATURAL_PERSON,
+    };
+
+    if (id) {
+      return prisma.shareholder.update({
+        where: { id },
+        data: payload,
+      });
+    } else {
+      return prisma.shareholder.create({
+        data: createPayload,
+      });
+    }
+  });
+
+  return Promise.all(upsertPromises);
+};
+
+export type PEPPayloadData = Omit<
+  Prisma.PoliticallyExposedPersonCreateInput,
+  "businessAccount"
+> & { id?: string };
+
+export const upsertMultiplePEPs = async (
+  userId: string,
+  pepsData: PEPPayloadData[]
+): Promise<PoliticallyExposedPerson[]> => {
+  const businessAccount = await prisma.businessAccount.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+  if (!businessAccount) {
+    throw new Error("Business account not found.");
+  }
+
+  const upsertPromises = pepsData.map((data) => {
+    const { id, ...payload } = data;
+    const createPayload = {
+      ...payload,
+      businessAccountId: businessAccount.id,
+      name: payload.name || "N/A",
+    };
+
+    if (id) {
+      return prisma.politicallyExposedPerson.update({
+        where: { id },
+        data: payload,
+      });
+    } else {
+      return prisma.politicallyExposedPerson.create({
+        data: createPayload,
+      });
+    }
+  });
+
+  return Promise.all(upsertPromises);
+};
+
+//delete records
+export const deleteDirectorById = async (
+  userId: string,
+  directorId: string
+): Promise<Director> => {
+  const businessAccount = await prisma.businessAccount.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+  if (!businessAccount) {
+    throw new Error("Business account not found.");
+  }
+
+  const director = await prisma.director.findUnique({
+    where: { id: directorId },
+  });
+
+  if (!director || director.businessAccountId !== businessAccount.id) {
+    throw new Error(
+      "Director not found or does not belong to this business account."
+    );
+  }
+
+  return prisma.director.delete({
+    where: { id: directorId },
+  });
+};
+
+export const deleteShareholderById = async (
+  userId: string,
+  shareholderId: string
 ): Promise<Shareholder> => {
   const businessAccount = await prisma.businessAccount.findUnique({
     where: { userId },
+    select: { id: true },
   });
   if (!businessAccount) {
     throw new Error("Business account not found.");
   }
 
-  const uploadData: { [key: string]: string | null } = {};
+  const shareholder = await prisma.shareholder.findUnique({
+    where: { id: shareholderId },
+  });
 
-  if (documentFiles?.validIdUrl?.[0]) {
-    uploadData.validIdUrl = await uploadMultipleToCloudinary(
-      documentFiles.validIdUrl,
-      "raw"
-    ).then((urls) => urls[0]);
-  }
-  if (documentFiles?.proofOfAddressUrl?.[0]) {
-    uploadData.proofOfAddressUrl = await uploadMultipleToCloudinary(
-      documentFiles.proofOfAddressUrl,
-      "raw"
-    ).then((urls) => urls[0]);
+  if (!shareholder || shareholder.businessAccountId !== businessAccount.id) {
+    throw new Error(
+      "Shareholder not found or does not belong to this business account."
+    );
   }
 
-  const payload = { ...data, ...uploadData };
-
-  if (shareholderId) {
-    return prisma.shareholder.update({
-      where: { id: shareholderId },
-      data: payload,
-    });
-  } else {
-    return prisma.shareholder.create({
-      data: {
-        ...payload,
-        businessAccountId: businessAccount.id,
-      },
-    });
-  }
+  return prisma.shareholder.delete({
+    where: { id: shareholderId },
+  });
 };
-export type PEPPayloadData = Omit<
-  Prisma.PoliticallyExposedPersonCreateInput,
-  "id" | "businessAccount" | "businessAccountId"
->;
 
-export const updateOrCreatePEP = async (
+export const deletePEPById = async (
   userId: string,
-  pepId: string | null,
-  data: PEPPayloadData
+  pepId: string
 ): Promise<PoliticallyExposedPerson> => {
   const businessAccount = await prisma.businessAccount.findUnique({
     where: { userId },
+    select: { id: true },
   });
   if (!businessAccount) {
     throw new Error("Business account not found.");
   }
 
-  if (pepId) {
-    return prisma.politicallyExposedPerson.update({
-      where: { id: pepId },
-      data: data,
-    });
-  } else {
-    return prisma.politicallyExposedPerson.create({
-      data: {
-        ...data,
-        businessAccountId: businessAccount.id,
-      },
-    });
+  const pep = await prisma.politicallyExposedPerson.findUnique({
+    where: { id: pepId },
+  });
+
+  if (!pep || pep.businessAccountId !== businessAccount.id) {
+    throw new Error(
+      "PEP not found or does not belong to this business account."
+    );
   }
+
+  return prisma.politicallyExposedPerson.delete({
+    where: { id: pepId },
+  });
 };

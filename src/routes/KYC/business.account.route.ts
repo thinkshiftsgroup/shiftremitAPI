@@ -2,14 +2,18 @@ import { Router } from "express";
 import {
   fetchBusinessAccountController,
   updateBusinessAccountController,
-  updateDirectorController,
-  updateShareholderController,
-  updatePEPController,
+  upsertDirectorsController,
+  upsertShareholdersController,
+  upsertPEPsController,
   uploadBusinessDocumentsController,
+  deleteDirectorController,
+  deleteShareholderController,
+  deletePEPController,
 } from "@controllers/KYC/business.account.controller";
 import { protect } from "@middlewares/auth.middleware";
 import asyncHandler from "@utils/asyncHandler";
 import multer from "multer";
+
 const router = Router();
 
 const storage = multer.memoryStorage();
@@ -28,35 +32,17 @@ const documentFields = [
   { name: "additionalDocument", maxCount: 1 },
 ];
 
-const directorDocumentFields = [
-  { name: "identificationDocumentProofUrl", maxCount: 1 },
-  { name: "residentialAddressUrlProof", maxCount: 1 },
-];
-
-const shareholderDocumentFields = [
-  { name: "validIdUrl", maxCount: 1 },
-  { name: "proofOfAddressUrl", maxCount: 1 },
-];
-
 router.use(protect);
 
 router.get("/", asyncHandler(fetchBusinessAccountController));
 
-router.put("/details", updateBusinessAccountController);
+router.put("/details", asyncHandler(updateBusinessAccountController));
 
-router.put(
-  "/director/:directorId",
-  upload.fields(directorDocumentFields),
-  updateDirectorController
-);
+router.put("/directors", asyncHandler(upsertDirectorsController));
 
-router.put(
-  "/shareholder/:shareholderId",
-  upload.fields(shareholderDocumentFields),
-  updateShareholderController
-);
+router.put("/shareholders", asyncHandler(upsertShareholdersController));
 
-router.put("/pep/:pepId", updatePEPController);
+router.put("/peps", asyncHandler(upsertPEPsController));
 
 router.post(
   "/documents/upload",
@@ -64,4 +50,11 @@ router.post(
   asyncHandler(uploadBusinessDocumentsController)
 );
 
+// Delete
+router.delete("/directors/:directorId", asyncHandler(deleteDirectorController));
+router.delete(
+  "/shareholders/:shareholderId",
+  asyncHandler(deleteShareholderController)
+);
+router.delete("/peps/:pepId", asyncHandler(deletePEPController));
 export const businessAccountRouter = router;
