@@ -53,7 +53,7 @@ export interface SimplifiedRate {
 }
 
 export interface ProcessedMoniepointRates {
-  moniepoint: SimplifiedRate;
+  //moniepoint: SimplifiedRate;
   nala: SimplifiedRate;
   lemfi: SimplifiedRate;
   sendApp: SimplifiedRate;
@@ -136,7 +136,7 @@ export const fetchAggregatedFxRates =
     };
 
     return {
-      moniepoint: moniepointRate,
+      //   moniepoint: moniepointRate,
       nala: competitorRatesMap.get("Nala") || DEFAULT_RATES.nala,
       lemfi: competitorRatesMap.get("LemFi") || DEFAULT_RATES.lemfi,
       sendApp: competitorRatesMap.get("Send App") || DEFAULT_RATES.sendApp,
