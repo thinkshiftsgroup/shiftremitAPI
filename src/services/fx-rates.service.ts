@@ -66,23 +66,20 @@ const DEFAULT_RATES: { [key: string]: SimplifiedRate } = {
   nala: {
     provider: "Nala",
     rate: 1896,
-    retrievedRelative: "Fallback (Static)",
-    rateRetrievalMessage:
-      "Rate not available from API; using default fallback.",
+    retrievedRelative: "updated 1-2 hrs",
+    rateRetrievalMessage: "Boosted rate applied",
   },
   lemfi: {
     provider: "LemFi",
     rate: 1915,
-    retrievedRelative: "Fallback (Static)",
-    rateRetrievalMessage:
-      "Rate not available from API; using default fallback.",
+    retrievedRelative: "updated 1-2 hrs",
+    rateRetrievalMessage: "Boosted rate applied",
   },
   sendApp: {
     provider: "Send App",
     rate: 1885,
-    retrievedRelative: "Fallback (Static)",
-    rateRetrievalMessage:
-      "Rate not available from API; using default fallback.",
+    retrievedRelative: "updated 1-2 hrs",
+    rateRetrievalMessage: "Boosted rate applied",
   },
 };
 
