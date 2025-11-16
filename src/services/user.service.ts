@@ -1,5 +1,7 @@
 import prisma from "@config/db";
 import { UserUpdateData } from "src/types/User";
+import { MulterFile } from "src/types/Upload";
+import { uploadToCloudinary } from "@utils/cloudinary";
 
 export async function getBasicProfile(userId: string) {
   const user = await prisma.user.findUnique({
@@ -70,6 +72,41 @@ export async function updateProfilePhoto(
   userId: string,
   profilePhotoUrl: string
 ) {
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      profilePhotoUrl: profilePhotoUrl,
+    },
+    select: {
+      id: true,
+      email: true,
+      username: true,
+      fullName: true,
+      firstname: true,
+      lastname: true,
+      middlename: true,
+      phoneNumber: true,
+      politicalExposure: true,
+      country: true,
+      gender: true,
+      dob: true,
+      meansOfIdentification: true,
+      validIDNumber: true,
+      idDate: true,
+      fullAddress: true,
+      taxNumber: true,
+      purposeOfShiftremit: true,
+      profilePhotoUrl: true,
+      biodata: true,
+    },
+  });
+
+  return updatedUser;
+}
+
+export async function updateProfilePhotoApp(userId: string, file: MulterFile) {
+  const profilePhotoUrl = await uploadToCloudinary(file, "image");
+
   const updatedUser = await prisma.user.update({
     where: { id: userId },
     data: {

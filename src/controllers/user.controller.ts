@@ -46,6 +46,32 @@ export const updateProfileController = async (req: Request, res: Response) => {
   }
 };
 
+export const updateProfilePhotoAppController = async (
+  req: Request,
+  res: Response
+) => {
+  const userId = (req as any).user.id;
+  const file = (req as any).file;
+
+  try {
+    if (!file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    const updatedProfile = await updateProfilePhoto(userId, file);
+
+    return res.status(200).json({
+      status: "success",
+      data: updatedProfile,
+      message: "Profile photo updated successfully",
+    });
+  } catch (error) {
+    console.error("PATCH Profile Photo Error:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Failed to update profile photo";
+    return res.status(500).json({ message: errorMessage });
+  }
+};
 export const updateProfilePhotoController = async (
   req: Request,
   res: Response
