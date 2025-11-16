@@ -3,6 +3,7 @@ import {
   getBasicProfile,
   updateBasicProfile,
   updateProfilePhoto,
+  updateProfilePhotoApp,
 } from "@services/user.service";
 
 export const getProfileController = async (req: Request, res: Response) => {
@@ -58,7 +59,7 @@ export const updateProfilePhotoAppController = async (
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    const updatedProfile = await updateProfilePhoto(userId, file);
+    const updatedProfile = await updateProfilePhotoApp(userId, file);
 
     return res.status(200).json({
       status: "success",
