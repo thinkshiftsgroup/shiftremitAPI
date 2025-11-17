@@ -286,6 +286,9 @@ export const getUserWithDocs = async (
       businessAccount: {
         include: {
           businessAccountDocs: true,
+          shareholders: true,
+          directors: true,
+          peps: true,
           kycSubmission: true,
         },
       },
