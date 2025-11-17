@@ -7,6 +7,7 @@ import {
   DocStatus,
   OverallDocStatus,
   BusinessAccountDoc,
+  BusinessAccount,
 } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -34,6 +35,21 @@ export interface UserQueryOptions {
 
 export type UserUpdatePayload = Partial<
   Omit<User, "id" | "createdAt" | "updatedAt">
+>;
+
+export type BusinessAccountUpdatePayload = Partial<
+  Omit<
+    BusinessAccount,
+    | "id"
+    | "userId"
+    | "createdAt"
+    | "updatedAt"
+    | "directors"
+    | "shareholders"
+    | "peps"
+    | "businessAccountDocs"
+    | "kycSubmission"
+  >
 >;
 
 export type DocType =
@@ -287,6 +303,17 @@ export const updateUserDetails = async (
     data: data,
   });
   return updatedUser;
+};
+
+export const updateBusinessAccountDetails = async (
+  businessAccountId: string,
+  data: BusinessAccountUpdatePayload
+): Promise<BusinessAccount> => {
+  const updatedBusinessAccount = await prisma.businessAccount.update({
+    where: { id: businessAccountId },
+    data: data,
+  });
+  return updatedBusinessAccount;
 };
 
 export const updateIndividualDocStatus = async (

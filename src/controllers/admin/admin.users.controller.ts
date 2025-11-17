@@ -9,6 +9,8 @@ import {
   DocType,
   BusinessDocType,
   updateBusinessDocStatus,
+  updateBusinessAccountDetails,
+  BusinessAccountUpdatePayload,
 } from "@services/admin/admin.users.service";
 import { DocStatus } from "@prisma/client";
 
@@ -128,6 +130,36 @@ export const updateUserController = async (req: Request, res: Response) => {
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Failed to update user";
+    res.status(500).json({ message: errorMessage });
+  }
+};
+
+export const updateBusinessAccountController = async (
+  req: Request,
+  res: Response
+) => {
+  const { businessAccountId } = req.params;
+  const updateData: BusinessAccountUpdatePayload = req.body;
+
+  if (Object.keys(updateData).length === 0) {
+    return res.status(400).json({ message: "Request body cannot be empty" });
+  }
+
+  try {
+    const updatedBusinessAccount = await updateBusinessAccountDetails(
+      businessAccountId,
+      updateData
+    );
+
+    res.status(200).json({
+      message: "Business account updated successfully",
+      data: updatedBusinessAccount,
+    });
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : "Failed to update business account";
     res.status(500).json({ message: errorMessage });
   }
 };
