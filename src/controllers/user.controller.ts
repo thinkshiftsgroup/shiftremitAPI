@@ -4,7 +4,9 @@ import {
   updateBasicProfile,
   updateProfilePhoto,
   updateProfilePhotoApp,
+  changePassword,
 } from "@services/user.service";
+import { InCorrectOldPasswordError } from "@middlewares/error.custom";
 
 export const getProfileController = async (req: Request, res: Response) => {
   const userId = (req as any).user.id;
@@ -93,5 +95,33 @@ export const updateProfilePhotoController = async (
   } catch (error) {
     console.error("PATCH Profile Photo Error:", error);
     return res.status(500).json({ message: "Failed to update profile photo" });
+  }
+};
+
+export const changePasswordController = async (req: Request, res: Response) => {
+  const userId = (req as any).user.id;
+  const { oldPassword, newPassword } = req.body;
+
+  if (!oldPassword || !newPassword) {
+    return res
+      .status(400)
+      .json({ message: "Old password and new password are required" });
+  }
+
+  try {
+    const result = await changePassword(userId, oldPassword, newPassword);
+
+    return res.status(200).json({
+      status: "success",
+      message: result.message,
+    });
+  } catch (error: any) {
+    console.error("CHANGE Password Error:", error);
+
+    if (error instanceof InCorrectOldPasswordError) {
+      return res.status(401).json({ message: error.message });
+    }
+
+    return res.status(500).json({ message: "Failed to change password" });
   }
 };

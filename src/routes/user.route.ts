@@ -4,6 +4,7 @@ import {
   updateProfileController,
   updateProfilePhotoController,
   updateProfilePhotoAppController,
+  changePasswordController,
 } from "../controllers/user.controller";
 import asyncHandler from "../utils/asyncHandler";
 import { protect } from "@middlewares/auth.middleware";
@@ -29,5 +30,6 @@ router.patch(
   asyncHandler(updateProfilePhotoAppController)
 );
 router.patch("/photo", asyncHandler(updateProfilePhotoController));
+router.patch("/change-password", asyncHandler(changePasswordController));
 
 export const profileRouter = router;
