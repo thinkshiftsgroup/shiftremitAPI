@@ -176,7 +176,6 @@ const calculateBusinessOverallStatus = (
 
   return OverallDocStatus.PENDING_REVIEW;
 };
-
 export const getAllUsers = async (
   options: UserQueryOptions
 ): Promise<{ users: DetailedUser[]; totalCount: number }> => {
@@ -237,7 +236,12 @@ export const getAllUsers = async (
           take: 1,
           orderBy: { createdAt: "desc" },
         },
+        businessAccount: {
+          select: { id: true },
+        },
       },
+      skip: skip,
+      take: limit,
     }),
     prisma.user.count({ where: where }),
   ]);
@@ -246,11 +250,16 @@ export const getAllUsers = async (
     const lastTransaction =
       user.transfers.length > 0 ? user.transfers[0] : null;
 
-    const { transfers, ...userWithoutTransfers } = user;
+    const isBusiness = user.businessAccount !== null;
+    const isIndividual = user.businessAccount === null;
+
+    const { transfers, businessAccount, ...userWithoutRelations } = user;
 
     return {
-      ...userWithoutTransfers,
+      ...userWithoutRelations,
       lastTransaction: lastTransaction,
+      isBusiness: isBusiness,
+      isIndividual: isIndividual,
     } as DetailedUser;
   });
 
@@ -265,14 +274,9 @@ export const getAllUsers = async (
         return amountB - amountA;
       }
     });
-    detailedUsers = detailedUsers.slice(skip, skip + limit);
-  } else {
-    detailedUsers = detailedUsers.slice(skip, skip + limit);
   }
-
   return { users: detailedUsers, totalCount: totalCount };
 };
-
 export const getUserWithDocs = async (
   userId: string
 ): Promise<UserWithDocs | null> => {
