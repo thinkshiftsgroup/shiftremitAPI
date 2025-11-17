@@ -4,6 +4,7 @@ import {
   getUserDetails,
   updateUserController,
   updateIndividualDocStatusController,
+  updateBusinessDocStatusController,
 } from "@controllers/admin/admin.users.controller";
 import asyncHandler from "@utils/asyncHandler";
 import { adminProtect } from "@middlewares/auth.middleware";
@@ -19,4 +20,8 @@ router.patch(
   asyncHandler(updateIndividualDocStatusController)
 );
 
+router.patch(
+  "/:businessAccountId/business-document-status",
+  asyncHandler(updateBusinessDocStatusController)
+);
 export const adminUsersRouter = router;

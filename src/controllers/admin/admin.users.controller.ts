@@ -7,6 +7,8 @@ import {
   UserQueryOptions,
   UserUpdatePayload,
   DocType,
+  BusinessDocType,
+  updateBusinessDocStatus,
 } from "@services/admin/admin.users.service";
 import { DocStatus } from "@prisma/client";
 
@@ -179,6 +181,63 @@ export const updateIndividualDocStatusController = async (
       error instanceof Error
         ? error.message
         : "Failed to update document status";
+    const statusCode = errorMessage.includes("not found") ? 404 : 500;
+    res.status(statusCode).json({ message: errorMessage });
+  }
+};
+
+export const updateBusinessDocStatusController = async (
+  req: Request,
+  res: Response
+) => {
+  const { businessAccountId } = req.params;
+  const { docType, status } = req.body;
+
+  if (!docType || !status) {
+    return res
+      .status(400)
+      .json({ message: "Missing required fields: docType and status" });
+  }
+
+  const allowedDocTypes: BusinessDocType[] = [
+    "businessRegistrationIncorporationCertificate",
+    "articleOfAssociation",
+    "operatingBusinessUtilityBill",
+    "companyStatusReports",
+    "additionalDocument",
+  ];
+
+  const allowedDocStatuses: DocStatus[] = [
+    DocStatus.APPROVED,
+    DocStatus.PENDING,
+    DocStatus.IN_REVIEW,
+    DocStatus.REJECTED,
+  ];
+
+  if (!allowedDocTypes.includes(docType as BusinessDocType)) {
+    return res.status(400).json({ message: `Invalid docType: ${docType}` });
+  }
+
+  if (!allowedDocStatuses.includes(status)) {
+    return res.status(400).json({ message: `Invalid status: ${status}` });
+  }
+
+  try {
+    const updatedDoc = await updateBusinessDocStatus(
+      businessAccountId,
+      docType as BusinessDocType,
+      status
+    );
+
+    res.status(200).json({
+      message: "Business document status updated successfully",
+      data: updatedDoc,
+    });
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : "Failed to update business document status";
     const statusCode = errorMessage.includes("not found") ? 404 : 500;
     res.status(statusCode).json({ message: errorMessage });
   }

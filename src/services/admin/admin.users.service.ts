@@ -6,6 +6,7 @@ import {
   IndividualKYC,
   DocStatus,
   OverallDocStatus,
+  BusinessAccountDoc,
 } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -43,6 +44,12 @@ export type DocType =
   | "recentBankStatement"
   | "additionalDocuments";
 
+export type BusinessDocType =
+  | "businessRegistrationIncorporationCertificate"
+  | "articleOfAssociation"
+  | "operatingBusinessUtilityBill"
+  | "companyStatusReports"
+  | "additionalDocument";
 const calculateOverallStatus = (
   doc: IndividualAccountDoc,
   updatedKey: keyof IndividualAccountDoc,
@@ -76,6 +83,59 @@ const calculateOverallStatus = (
     doc.proofOfValidIDBackView,
     doc.recentBankStatement,
   ];
+  const isPendingUpload = requiredDocs.some(
+    (url) => url === null || url === undefined
+  );
+
+  if (isPendingUpload) {
+    return OverallDocStatus.PENDING_UPLOAD;
+  }
+  if (statuses.includes(DocStatus.REJECTED)) {
+    return OverallDocStatus.REJECTED;
+  }
+
+  if (
+    statuses.includes(DocStatus.PENDING) ||
+    statuses.includes(DocStatus.IN_REVIEW)
+  ) {
+    return OverallDocStatus.PENDING_REVIEW;
+  }
+
+  if (statuses.every((status) => status === DocStatus.APPROVED)) {
+    return OverallDocStatus.APPROVED;
+  }
+
+  return OverallDocStatus.PENDING_REVIEW;
+};
+
+const calculateBusinessOverallStatus = (
+  doc: BusinessAccountDoc,
+  updatedKey: keyof BusinessAccountDoc,
+  newStatus: DocStatus
+): OverallDocStatus => {
+  const statuses = [
+    updatedKey === "registrationCertificateStatus"
+      ? newStatus
+      : doc.registrationCertificateStatus,
+    updatedKey === "articleOfAssociationStatus"
+      ? newStatus
+      : doc.articleOfAssociationStatus,
+    updatedKey === "utilityBillStatus" ? newStatus : doc.utilityBillStatus,
+    updatedKey === "companyStatusReportsStatus"
+      ? newStatus
+      : doc.companyStatusReportsStatus,
+    updatedKey === "additionalDocumentStatus"
+      ? newStatus
+      : doc.additionalDocumentStatus,
+  ];
+
+  const requiredDocs = [
+    doc.businessRegistrationIncorporationCertificate,
+    doc.articleOfAssociation,
+    doc.operatingBusinessUtilityBill,
+    doc.companyStatusReports,
+  ];
+
   const isPendingUpload = requiredDocs.some(
     (url) => url === null || url === undefined
   );
@@ -252,6 +312,59 @@ export const updateIndividualDocStatus = async (
 
   const updatedDoc = await prisma.individualAccountDoc.update({
     where: { userId: userId },
+    data: {
+      [docStatusField]: status,
+      overallStatus: newOverallStatus,
+    },
+  });
+
+  return updatedDoc;
+};
+
+export const updateBusinessDocStatus = async (
+  businessAccountId: string,
+  docType: BusinessDocType,
+  status: DocStatus
+): Promise<BusinessAccountDoc> => {
+  let docStatusField: keyof BusinessAccountDoc;
+  switch (docType) {
+    case "businessRegistrationIncorporationCertificate":
+      docStatusField = "registrationCertificateStatus";
+      break;
+    case "articleOfAssociation":
+      docStatusField = "articleOfAssociationStatus";
+      break;
+    case "operatingBusinessUtilityBill":
+      docStatusField = "utilityBillStatus";
+      break;
+    case "companyStatusReports":
+      docStatusField = "companyStatusReportsStatus";
+      break;
+    case "additionalDocument":
+      docStatusField = "additionalDocumentStatus";
+      break;
+    default:
+      throw new Error(`Invalid business docType: ${docType}`);
+  }
+
+  const currentDoc = await prisma.businessAccountDoc.findUnique({
+    where: { businessAccountId: businessAccountId },
+  });
+
+  if (!currentDoc) {
+    throw new Error(
+      `BusinessAccountDoc not found for business Account ID: ${businessAccountId}`
+    );
+  }
+
+  const newOverallStatus = calculateBusinessOverallStatus(
+    currentDoc,
+    docStatusField,
+    status
+  );
+
+  const updatedDoc = await prisma.businessAccountDoc.update({
+    where: { businessAccountId: businessAccountId },
     data: {
       [docStatusField]: status,
       overallStatus: newOverallStatus,
