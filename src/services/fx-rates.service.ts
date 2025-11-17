@@ -71,7 +71,7 @@ const DEFAULT_RATES: { [key: string]: SimplifiedRate } = {
   },
   lemfi: {
     provider: "LemFi",
-    rate: 1902,
+    rate: 1908,
     retrievedRelative: "updated 1-2 hrs",
     rateRetrievalMessage: "Boosted rate applied",
   },
