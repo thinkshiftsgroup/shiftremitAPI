@@ -282,6 +282,7 @@ export const getUserWithDocs = async (
     },
     include: {
       individualAccountDoc: true,
+      kycSubmission: true,
       businessAccount: {
         include: {
           businessAccountDocs: true,
