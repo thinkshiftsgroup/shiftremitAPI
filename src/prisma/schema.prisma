@@ -231,7 +231,7 @@ model BusinessAccount {
   shareholders                      Shareholder[]
   peps                              PoliticallyExposedPerson[]
   businessAccountDocs               BusinessAccountDoc?
-
+  kycSubmission                   BusinessKYC?
   createdAt                         DateTime                    @default(now())
   updatedAt                         DateTime                    @updatedAt
 }
@@ -318,4 +318,13 @@ model BusinessAccountDoc {
 
   createdAt                         DateTime                    @default(now())
   updatedAt                         DateTime                    @updatedAt
+}
+
+model BusinessKYC {
+  id                String           @id @default(auto()) @map("_id") @db.ObjectId
+  businessAccountId String           @unique @db.ObjectId
+  submissionDate    DateTime         @default(now())
+  status            OverallDocStatus @default(NOT_STARTED)
+  
+  businessAccount   BusinessAccount @relation(fields: [businessAccountId], references: [id])
 }

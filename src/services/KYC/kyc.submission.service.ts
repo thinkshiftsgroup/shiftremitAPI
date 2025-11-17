@@ -108,3 +108,109 @@ export const fetchIndividualKYCStatus = async (userId: string) => {
 
   return kycRecord;
 };
+
+export const submitBusinessKYC = async (userId: string) => {
+  const businessAccount = await prisma.businessAccount.findUnique({
+    where: { userId },
+    select: {
+      id: true,
+      businessName: true,
+      incorporationNumber: true,
+      companyAddress: true,
+      countryOfIncorporation: true,
+      whatDoesTheBusinessDo: true,
+      businessAccountDocs: true,
+    },
+  });
+
+  if (!businessAccount) {
+    throw new Error("Business account not found for user.");
+  }
+
+  const docRecord = businessAccount.businessAccountDocs;
+
+  if (!docRecord) {
+    throw new Error(
+      "Document record (BusinessAccountDoc) not initialized for business."
+    );
+  }
+
+  const {
+    businessName,
+    incorporationNumber,
+    companyAddress,
+    countryOfIncorporation,
+    whatDoesTheBusinessDo,
+  } = businessAccount;
+
+  const {
+    businessRegistrationIncorporationCertificate,
+    articleOfAssociation,
+    operatingBusinessUtilityBill,
+    companyStatusReports,
+  } = docRecord;
+
+  const missingFields: string[] = [];
+
+  if (!businessName) missingFields.push("Business Name");
+  if (!incorporationNumber) missingFields.push("Incorporation Number");
+  if (!companyAddress) missingFields.push("Company Address");
+  if (!countryOfIncorporation) missingFields.push("Country of Incorporation");
+  if (!whatDoesTheBusinessDo) missingFields.push("Business Description");
+
+  if (!businessRegistrationIncorporationCertificate)
+    missingFields.push("Registration Certificate");
+  if (!articleOfAssociation) missingFields.push("Articles of Association");
+  if (!operatingBusinessUtilityBill) missingFields.push("Utility Bill");
+  if (!companyStatusReports) missingFields.push("Company Status Reports");
+
+  if (missingFields.length > 0) {
+    throw new Error(
+      `Business KYC submission failed. Missing required information/documents: ${missingFields.join(
+        ", "
+      )}`
+    );
+  }
+
+  const updateData = {
+    submissionDate: new Date(),
+    status: OverallDocStatus.PENDING_REVIEW,
+  };
+
+  const submittedKYC = await prisma.businessKYC.upsert({
+    where: { businessAccountId: businessAccount.id },
+    update: updateData,
+    create: {
+      businessAccountId: businessAccount.id,
+      ...updateData,
+    },
+    select: {
+      status: true,
+      submissionDate: true,
+    },
+  });
+
+  return submittedKYC;
+};
+
+export const fetchBusinessKYCStatus = async (userId: string) => {
+  const businessAccount = await prisma.businessAccount.findUnique({
+    where: { userId },
+    select: { id: true, kycSubmission: true },
+  });
+
+  if (!businessAccount) {
+    throw new Error("Business account not found for user.");
+  }
+
+  const kycRecord = businessAccount.kycSubmission;
+
+  if (!kycRecord) {
+    return {
+      status: OverallDocStatus.NOT_STARTED,
+      submissionDate: null,
+    };
+  }
+
+  return kycRecord;
+};

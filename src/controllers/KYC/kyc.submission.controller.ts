@@ -2,6 +2,8 @@ import { Request, Response, NextFunction } from "express";
 import {
   submitIndividualKYC,
   fetchIndividualKYCStatus,
+  submitBusinessKYC,
+  fetchBusinessKYCStatus,
 } from "@services/KYC/kyc.submission.service";
 
 export const submitKYCController = async (
@@ -11,15 +13,24 @@ export const submitKYCController = async (
 ) => {
   try {
     const userId = (req as any).user.id;
+    const accountType = req.query.type as string;
 
     if (!userId) {
       return res.status(401).json({ message: "Authentication required." });
     }
 
-    const submissionStatus = await submitIndividualKYC(userId);
+    let submissionStatus;
+
+    if (accountType === "BUSINESS") {
+      submissionStatus = await submitBusinessKYC(userId);
+    } else {
+      submissionStatus = await submitIndividualKYC(userId);
+    }
 
     res.status(200).json({
-      message: "KYC documents submitted successfully and set for review.",
+      message: `${
+        accountType === "BUSINESS" ? "Business" : "Individual"
+      } KYC documents submitted successfully and set for review.`,
       status: submissionStatus.status,
       submissionDate: submissionStatus.submissionDate,
     });
@@ -35,15 +46,24 @@ export const getKYCStatusController = async (
 ) => {
   try {
     const userId = (req as any).user.id;
+    const accountType = req.query.type as string;
 
     if (!userId) {
       return res.status(401).json({ message: "Authentication required." });
     }
 
-    const status = await fetchIndividualKYCStatus(userId);
+    let status;
+
+    if (accountType === "BUSINESS") {
+      status = await fetchBusinessKYCStatus(userId);
+    } else {
+      status = await fetchIndividualKYCStatus(userId);
+    }
 
     res.status(200).json({
-      message: "KYC submission status fetched successfully.",
+      message: `${
+        accountType === "BUSINESS" ? "Business" : "Individual"
+      } KYC submission status fetched successfully.`,
       data: status,
     });
   } catch (error) {
