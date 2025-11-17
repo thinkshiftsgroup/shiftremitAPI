@@ -4,6 +4,8 @@ import {
   IndividualAccountDoc,
   BankTransfer,
   IndividualKYC,
+  DocStatus,
+  OverallDocStatus,
 } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -28,6 +30,76 @@ export interface UserQueryOptions {
   name?: string;
   isVerified?: boolean;
 }
+
+export type UserUpdatePayload = Partial<
+  Omit<User, "id" | "createdAt" | "updatedAt">
+>;
+
+export type DocType =
+  | "recentProofOfAddress"
+  | "recentSelfieWithID"
+  | "proofOfValidID"
+  | "proofOfValidIDBackView"
+  | "recentBankStatement"
+  | "additionalDocuments";
+
+const calculateOverallStatus = (
+  doc: IndividualAccountDoc,
+  updatedKey: keyof IndividualAccountDoc,
+  newStatus: DocStatus
+): OverallDocStatus => {
+  const statuses = [
+    updatedKey === "recentProofOfAddressStatus"
+      ? newStatus
+      : doc.recentProofOfAddressStatus,
+    updatedKey === "recentSelfieWithIDStatus"
+      ? newStatus
+      : doc.recentSelfieWithIDStatus,
+    updatedKey === "proofOfValidIDStatus"
+      ? newStatus
+      : doc.proofOfValidIDStatus,
+    updatedKey === "proofOfValidIDBackViewStatus"
+      ? newStatus
+      : doc.proofOfValidIDBackViewStatus,
+    updatedKey === "recentBankStatementStatus"
+      ? newStatus
+      : doc.recentBankStatementStatus,
+    updatedKey === "additionalDocumentsStatus"
+      ? newStatus
+      : doc.additionalDocumentsStatus,
+  ];
+
+  const requiredDocs = [
+    doc.recentProofOfAddress,
+    doc.recentSelfieWithID,
+    doc.proofOfValidID,
+    doc.proofOfValidIDBackView,
+    doc.recentBankStatement,
+  ];
+  const isPendingUpload = requiredDocs.some(
+    (url) => url === null || url === undefined
+  );
+
+  if (isPendingUpload) {
+    return OverallDocStatus.PENDING_UPLOAD;
+  }
+  if (statuses.includes(DocStatus.REJECTED)) {
+    return OverallDocStatus.REJECTED;
+  }
+
+  if (
+    statuses.includes(DocStatus.PENDING) ||
+    statuses.includes(DocStatus.IN_REVIEW)
+  ) {
+    return OverallDocStatus.PENDING_REVIEW;
+  }
+
+  if (statuses.every((status) => status === DocStatus.APPROVED)) {
+    return OverallDocStatus.APPROVED;
+  }
+
+  return OverallDocStatus.PENDING_REVIEW;
+};
 
 export const getAllUsers = async (
   options: UserQueryOptions
@@ -144,4 +216,47 @@ export const getUserWithDocs = async (
   });
 
   return user as UserWithDocs | null;
+};
+
+export const updateUserDetails = async (
+  userId: string,
+  data: UserUpdatePayload
+): Promise<User> => {
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: data,
+  });
+  return updatedUser;
+};
+
+export const updateIndividualDocStatus = async (
+  userId: string,
+  docType: DocType,
+  status: DocStatus
+): Promise<IndividualAccountDoc> => {
+  const docStatusField = `${docType}Status` as keyof IndividualAccountDoc;
+
+  const currentDoc = await prisma.individualAccountDoc.findUnique({
+    where: { userId: userId },
+  });
+
+  if (!currentDoc) {
+    throw new Error(`IndividualAccountDoc not found for user ID: ${userId}`);
+  }
+
+  const newOverallStatus = calculateOverallStatus(
+    currentDoc,
+    docStatusField,
+    status
+  );
+
+  const updatedDoc = await prisma.individualAccountDoc.update({
+    where: { userId: userId },
+    data: {
+      [docStatusField]: status,
+      overallStatus: newOverallStatus,
+    },
+  });
+
+  return updatedDoc;
 };

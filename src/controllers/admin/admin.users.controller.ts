@@ -2,8 +2,13 @@ import { Request, Response } from "express";
 import {
   getAllUsers,
   getUserWithDocs,
+  updateUserDetails,
+  updateIndividualDocStatus,
   UserQueryOptions,
+  UserUpdatePayload,
+  DocType,
 } from "@services/admin/admin.users.service";
+import { DocStatus } from "@prisma/client";
 
 export const listAllUsers = async (req: Request, res: Response) => {
   const page = parseInt(req.query.page as string) || 1;
@@ -61,10 +66,10 @@ export const listAllUsers = async (req: Request, res: Response) => {
     limit,
     sortByAmount,
     sortByDate,
+    name,
+    isVerified,
     startDate,
     endDate,
-    name, // This property must exist in the imported UserQueryOptions
-    isVerified, // This property must exist in the imported UserQueryOptions
   };
 
   try {
@@ -100,5 +105,81 @@ export const getUserDetails = async (req: Request, res: Response) => {
     });
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch user details" });
+  }
+};
+
+export const updateUserController = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const updateData: UserUpdatePayload = req.body;
+
+  if (Object.keys(updateData).length === 0) {
+    return res.status(400).json({ message: "Request body cannot be empty" });
+  }
+
+  try {
+    const updatedUser = await updateUserDetails(id, updateData);
+
+    res.status(200).json({
+      message: "User updated successfully",
+      data: updatedUser,
+    });
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Failed to update user";
+    res.status(500).json({ message: errorMessage });
+  }
+};
+
+export const updateIndividualDocStatusController = async (
+  req: Request,
+  res: Response
+) => {
+  const { id } = req.params;
+  const { docType, status } = req.body;
+
+  if (!docType || !status) {
+    return res
+      .status(400)
+      .json({ message: "Missing required fields: docType and status" });
+  }
+
+  const allowedDocTypes: DocType[] = [
+    "recentProofOfAddress",
+    "recentSelfieWithID",
+    "proofOfValidID",
+    "proofOfValidIDBackView",
+    "recentBankStatement",
+    "additionalDocuments",
+  ];
+
+  const allowedDocStatuses: DocStatus[] = [
+    DocStatus.APPROVED,
+    DocStatus.PENDING,
+    DocStatus.IN_REVIEW,
+    DocStatus.REJECTED,
+  ];
+
+  if (!allowedDocTypes.includes(docType)) {
+    return res.status(400).json({ message: `Invalid docType: ${docType}` });
+  }
+
+  if (!allowedDocStatuses.includes(status)) {
+    return res.status(400).json({ message: `Invalid status: ${status}` });
+  }
+
+  try {
+    const updatedDoc = await updateIndividualDocStatus(id, docType, status);
+
+    res.status(200).json({
+      message: "Document status updated successfully",
+      data: updatedDoc,
+    });
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : "Failed to update document status";
+    const statusCode = errorMessage.includes("not found") ? 404 : 500;
+    res.status(statusCode).json({ message: errorMessage });
   }
 };
