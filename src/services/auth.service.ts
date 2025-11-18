@@ -252,6 +252,12 @@ export const loginUser = async (
     throw new Error("Invalid credentials.");
   }
 
+  if (user.isDeleted) {
+    throw new Error(
+      "Account is inactive. Please contact administrator for assistance."
+    );
+  }
+
   if (!user.isVerified) {
     throw new Error("Please verify your email address first.");
   }
