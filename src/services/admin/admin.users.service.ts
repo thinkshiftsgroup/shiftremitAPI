@@ -251,8 +251,7 @@ export const getAllUsers = async (
       user.transfers.length > 0 ? user.transfers[0] : null;
 
     const isBusiness = user.businessAccount !== null;
-    const isIndividual = user.businessAccount === null;
-
+    const isIndividual = user.individualAccountDoc !== null;
     const { transfers, businessAccount, ...userWithoutRelations } = user;
 
     return {
