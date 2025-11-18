@@ -264,8 +264,8 @@ export const getAllUsers = async (
 
   if (sortByAmount) {
     detailedUsers.sort((a, b) => {
-      const amountA = a.lastTransaction ?.amount || 0;
-      const amountB = b.lastTransaction ?.amount || 0;
+      const amountA = a.lastTransaction?.amount || 0;
+      const amountB = b.lastTransaction?.amount || 0;
 
       if (sortByAmount === "asc") {
         return amountA - amountB;
@@ -305,13 +305,22 @@ export const updateUserDetails = async (
   userId: string,
   data: UserUpdatePayload
 ): Promise<User> => {
+  if (data.email) {
+    const existingUser = await prisma.user.findUnique({
+      where: { email: data.email },
+    });
+
+    if (existingUser && existingUser.id !== userId) {
+      throw new Error("Email already in use by another user.");
+    }
+  }
+
   const updatedUser = await prisma.user.update({
     where: { id: userId },
     data: data,
   });
   return updatedUser;
 };
-
 export const updateBusinessAccountDetails = async (
   businessAccountId: string,
   data: BusinessAccountUpdatePayload
