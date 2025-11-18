@@ -265,8 +265,8 @@ export const getAllUsers = async (
 
   if (sortByAmount) {
     detailedUsers.sort((a, b) => {
-      const amountA = a.lastTransaction?.amount || 0;
-      const amountB = b.lastTransaction?.amount || 0;
+      const amountA = a.lastTransaction ?.amount || 0;
+      const amountB = b.lastTransaction ?.amount || 0;
 
       if (sortByAmount === "asc") {
         return amountA - amountB;
