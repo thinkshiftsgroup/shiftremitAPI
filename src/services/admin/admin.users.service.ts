@@ -416,3 +416,24 @@ export const updateBusinessDocStatus = async (
 
   return updatedDoc;
 };
+
+export const toggleUserSoftDelete = async (
+  userId: string,
+  status: boolean
+): Promise<User> => {
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: { isDeleted: status },
+  });
+  return updatedUser;
+};
+export const toggleUserVerification = async (
+  userId: string,
+  status: boolean
+): Promise<User> => {
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: { isVerified: status },
+  });
+  return updatedUser;
+};

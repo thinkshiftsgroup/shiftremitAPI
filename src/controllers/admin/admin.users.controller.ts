@@ -11,6 +11,8 @@ import {
   updateBusinessDocStatus,
   updateBusinessAccountDetails,
   BusinessAccountUpdatePayload,
+  toggleUserVerification,
+  toggleUserSoftDelete,
 } from "@services/admin/admin.users.service";
 import { DocStatus } from "@prisma/client";
 
@@ -272,5 +274,52 @@ export const updateBusinessDocStatusController = async (
         : "Failed to update business document status";
     const statusCode = errorMessage.includes("not found") ? 404 : 500;
     res.status(statusCode).json({ message: errorMessage });
+  }
+};
+
+export const toggleUserIsVerified = async (req: Request, res: Response) => {
+  const userId = req.params.userId;
+  const { isVerified } = req.body;
+
+  if (!userId || typeof isVerified !== "boolean") {
+    return res.status(400).json({
+      message: "User ID and a boolean value for isVerified are required",
+    });
+  }
+
+  try {
+    const updatedUser = await toggleUserVerification(userId, isVerified);
+    res.status(200).json({
+      message: `User verification status set to ${isVerified}`,
+      data: updatedUser,
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Failed to toggle user verification status" });
+  }
+};
+
+export const toggleUserIsDeleted = async (req: Request, res: Response) => {
+  const userId = req.params.userId;
+  const { isDeleted } = req.body;
+  if (!userId || typeof isDeleted !== "boolean") {
+    return res.status(400).json({
+      message: "User ID and a boolean value for isDeleted are required",
+    });
+  }
+
+  try {
+    const updatedUser = await toggleUserSoftDelete(userId, isDeleted);
+    res.status(200).json({
+      message: `User soft-delete status set to ${
+        isDeleted ? "deleted" : "restored"
+      }`,
+      data: updatedUser,
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Failed to toggle user soft-delete status" });
   }
 };

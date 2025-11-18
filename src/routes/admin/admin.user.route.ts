@@ -6,6 +6,8 @@ import {
   updateIndividualDocStatusController,
   updateBusinessDocStatusController,
   updateBusinessAccountController,
+  toggleUserIsVerified,
+  toggleUserIsDeleted,
 } from "@controllers/admin/admin.users.controller";
 import asyncHandler from "@utils/asyncHandler";
 import { adminProtect } from "@middlewares/auth.middleware";
@@ -30,4 +32,7 @@ router.patch(
   "/:businessAccountId/business-account-details",
   asyncHandler(updateBusinessAccountController)
 );
+
+router.patch("/:userId/verify", asyncHandler(toggleUserIsVerified));
+router.patch("/:userId/soft-delete", asyncHandler(toggleUserIsDeleted));
 export const adminUsersRouter = router;

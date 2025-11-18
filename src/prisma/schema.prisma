@@ -64,6 +64,7 @@ model User {
   transfers             BankTransfer[]
   recipients              Recipient[]
   businessAccount         BusinessAccount?
+  isDeleted               Boolean                 @default(false)
 }
 
 model Biodata {
