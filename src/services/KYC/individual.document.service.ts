@@ -71,17 +71,29 @@ export const fetchIndividualDocuments = async (userId: string) => {
     where: { userId },
     select: {
       recentProofOfAddress: true,
+      recentProofOfAddressSizeKB: true,
       recentProofOfAddressStatus: true,
+
       recentSelfieWithID: true,
+      recentSelfieWithIDSizeKB: true,
       recentSelfieWithIDStatus: true,
+
       proofOfValidID: true,
+      proofOfValidIDSizeKB: true,
       proofOfValidIDStatus: true,
+
       proofOfValidIDBackView: true,
+      proofOfValidIDBackViewSizeKB: true,
       proofOfValidIDBackViewStatus: true,
+
       recentBankStatement: true,
+      recentBankStatementSizeKB: true,
       recentBankStatementStatus: true,
+
       additionalDocuments: true,
+      additionalDocumentsSizeKB: true,
       additionalDocumentsStatus: true,
+
       overallStatus: true,
     },
   });
