@@ -11,4 +11,8 @@ export interface UserUpdateData {
   taxNumber?: string;
   purposeOfShiftremit?: string;
   profilePhotoUrl?: string;
+
+  alertWhenGbpToNgnDropsBelow?: number;
+  alertWhenNgnToGbpDropsBelow?: number;
+  sendMeNotifs?: boolean;
 }

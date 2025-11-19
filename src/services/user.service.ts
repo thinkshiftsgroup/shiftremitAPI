@@ -28,6 +28,9 @@ export async function getBasicProfile(userId: string) {
       purposeOfShiftremit: true,
       profilePhotoUrl: true,
       biodata: true,
+      alertWhenGbpToNgnDropsBelow: true,
+      alertWhenNgnToGbpDropsBelow: true,
+      sendMeNotifs: true,
     },
   });
 
@@ -63,6 +66,9 @@ export async function updateBasicProfile(userId: string, data: UserUpdateData) {
       purposeOfShiftremit: true,
       profilePhotoUrl: true,
       biodata: true,
+      alertWhenGbpToNgnDropsBelow: true,
+      alertWhenNgnToGbpDropsBelow: true,
+      sendMeNotifs: true,
     },
   });
 

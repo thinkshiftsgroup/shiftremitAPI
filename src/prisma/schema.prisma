@@ -57,6 +57,10 @@ model User {
   fullAddress           String?
   taxNumber             String?
   purposeOfShiftremit   String?
+
+  alertWhenGbpToNgnDropsBelow Float?
+  alertWhenNgnToGbpDropsBelow Float?
+  sendMeNotifs                Boolean                @default(false)
   
   biodata               Biodata?
   individualAccountDoc  IndividualAccountDoc?
