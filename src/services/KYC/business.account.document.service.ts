@@ -3,6 +3,7 @@ import { uploadMultipleToCloudinary } from "@utils/cloudinary";
 import { DocStatus, OverallDocStatus } from "@prisma/client";
 import prisma from "@config/db";
 import { BusinessAccountDoc } from "@prisma/client";
+import { AdminNotificationHelper } from "@utils/AdminNotificationHelper";
 
 export const docMapping = {
   businessRegistrationIncorporationCertificate: "registrationCertificateStatus",
@@ -13,6 +14,8 @@ export const docMapping = {
 } as const;
 
 export type DocumentType = keyof typeof docMapping;
+
+const notificationHelper = new AdminNotificationHelper();
 
 export const uploadAndSaveBusinessDocuments = async (
   userId: string,
@@ -68,6 +71,8 @@ export const uploadAndSaveBusinessDocuments = async (
       },
     });
   }
+
+  await notificationHelper.notifyBusinessDocSubmission(userId);
 
   return { message: "Document uploaded and status set to IN_REVIEW.", docUrl };
 };

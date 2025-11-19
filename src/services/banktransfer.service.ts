@@ -1,5 +1,5 @@
 import prisma from "@config/db";
-import { BankTransfer, TransferStatus } from "@prisma/client";
+import { BankTransfer, TransferStatus, NotificationType } from "@prisma/client";
 import { sendAdminEmail } from "@utils/email";
 import { generateTransferReference, getLatestRates } from "@utils/helpers";
 import {
@@ -8,7 +8,9 @@ import {
 } from "./admin/admin.transfers.service";
 const ADMIN_EMAIL = "finance@shiftremit.com";
 import { FilterOptions } from "src/types/Transfers";
+import { AdminNotificationHelper } from "@utils/AdminNotificationHelper";
 
+const notificationHelper = new AdminNotificationHelper();
 interface BankTransferInput {
   amount: number;
   convertedNGNAmount?: number;
@@ -342,6 +344,12 @@ export const createBankTransfer = async (
       htmlBody: htmlBody,
     });
   }
+  await notificationHelper.createNotification({
+    userId: input.userId,
+    type: NotificationType.TRANSFER,
+    message: `New PENDING transfer created (Ref: ${transferReference}) from ${input.fromCurrency} to ${input.toCurrency} for ${input.amount}.`,
+    linkToResource: `/admin/transfers}`,
+  });
 
   return { accountDetails: finalAccountDetails, transferReference };
 };

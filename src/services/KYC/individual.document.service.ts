@@ -1,6 +1,7 @@
 import { MulterFile } from "src/types/Upload";
 import { uploadMultipleToCloudinary } from "@utils/cloudinary";
 import { DocStatus, IndividualAccountDoc } from "@prisma/client";
+import { AdminNotificationHelper } from "@utils/AdminNotificationHelper";
 import prisma from "@config/db";
 
 export const docMapping = {
@@ -14,6 +15,7 @@ export const docMapping = {
 } as const;
 
 export type DocumentType = keyof typeof docMapping;
+const notificationHelper = new AdminNotificationHelper();
 
 export const uploadAndSaveDocuments = async (
   userId: string,
@@ -63,6 +65,7 @@ export const uploadAndSaveDocuments = async (
     });
   }
 
+  await notificationHelper.notifyIndividualDocSubmission(userId);
   return { message: "Document uploaded and status set to IN_REVIEW.", docUrl };
 };
 

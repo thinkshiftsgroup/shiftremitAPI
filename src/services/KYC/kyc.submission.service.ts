@@ -1,5 +1,8 @@
 import prisma from "@config/db";
-import { OverallDocStatus } from "@prisma/client";
+import { OverallDocStatus, NotificationType } from "@prisma/client";
+import { AdminNotificationHelper } from "@utils/AdminNotificationHelper";
+
+const notificationHelper = new AdminNotificationHelper();
 
 export const submitIndividualKYC = async (userId: string) => {
   const user = await prisma.user.findUnique({
@@ -85,6 +88,13 @@ export const submitIndividualKYC = async (userId: string) => {
       status: true,
       submissionDate: true,
     },
+  });
+
+  await notificationHelper.createNotification({
+    userId: userId,
+    type: NotificationType.KYC_INDIVIDUAL_SUBMITTED,
+    message: `New Individual KYC submitted by ${user.firstname} ${user.lastname} for review.`,
+    linkToResource: `/admin/customers/${userId}`,
   });
 
   return submittedKYC;
@@ -188,6 +198,13 @@ export const submitBusinessKYC = async (userId: string) => {
       status: true,
       submissionDate: true,
     },
+  });
+
+  await notificationHelper.createNotification({
+    userId: userId,
+    type: NotificationType.KYC_BUSINESS_SUBMITTED,
+    message: `New Business KYC submitted for '${businessName}' for review.`,
+    linkToResource: `/admin/customers/${userId}`,
   });
 
   return submittedKYC;

@@ -20,6 +20,7 @@ import { adminTransferRouter } from "@routes/admin/admin.transfers.route";
 import { adminUsersRouter } from "@routes/admin/admin.user.route";
 import { adminDashboardRouter } from "@routes/admin/admin.dashboard.route";
 import { adminKycRouter } from "@routes/admin/admin.kyc.route";
+import { adminNotificationsRouter } from "@routes/admin/admin.notifications.route";
 const app = express();
 
 const allowedOrigins = [
@@ -58,6 +59,7 @@ app.use("/api/admin/transfers", adminTransferRouter);
 app.use("/api/admin/users", adminUsersRouter);
 app.use("/api/admin/dashboard", adminDashboardRouter);
 app.use("/api/admin/kyc", adminKycRouter);
+app.use("/api/admin/notifications", adminNotificationsRouter);
 
 app.get("/health", async (req: Request, res: Response) => {
   res.status(200).json({ status: "UP", message: "Service is healthy" });

@@ -9,10 +9,9 @@ import {
   DocStatus,
   OverallDocStatus,
   EntityType,
+  NotificationType,
 } from "@prisma/client";
-import { MulterFile } from "src/types/Upload";
-import { uploadMultipleToCloudinary } from "@utils/cloudinary";
-
+import { AdminNotificationHelper } from "@utils/AdminNotificationHelper";
 export type UpdateBusinessAccountData = Omit<
   Prisma.BusinessAccountUpdateInput,
   | "user"
@@ -24,6 +23,7 @@ export type UpdateBusinessAccountData = Omit<
   | "createdAt"
   | "updatedAt"
 >;
+const notificationHelper = new AdminNotificationHelper();
 
 export const getOrCreateBusinessAccount = async (
   userId: string
@@ -97,10 +97,19 @@ export const updateBusinessAccountFields = async (
     );
   }
 
-  return prisma.businessAccount.update({
+  const updatedAccount = await prisma.businessAccount.update({
     where: { userId },
     data: data as Prisma.BusinessAccountUpdateInput,
   });
+
+  await notificationHelper.createNotification({
+    userId,
+    type: NotificationType.BUSINESS_PROFILE_UPDATED,
+    message: "Updated Business Account profile fields.",
+    linkToResource: `/admin/customers/${userId}`,
+  });
+
+  return updatedAccount;
 };
 
 export type DirectorPayloadData = Omit<
