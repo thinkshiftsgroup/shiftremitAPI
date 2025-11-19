@@ -92,25 +92,25 @@ export const approveBusinessKYC = async (
     return prisma.businessKYC.findUniqueOrThrow({ where: { id: kycId } });
   }
 
-  const docUpdateData: any = {
-    registrationCertificateStatus: DocStatus.APPROVED,
-    articleOfAssociationStatus: DocStatus.APPROVED,
-    utilityBillStatus: DocStatus.APPROVED,
-    companyStatusReportsStatus: DocStatus.APPROVED,
-    additionalDocumentStatus: DocStatus.APPROVED,
-    overallStatus: OverallDocStatus.APPROVED,
-  };
+  // const docUpdateData: any = {
+  //   registrationCertificateStatus: DocStatus.APPROVED,
+  //   articleOfAssociationStatus: DocStatus.APPROVED,
+  //   utilityBillStatus: DocStatus.APPROVED,
+  //   companyStatusReportsStatus: DocStatus.APPROVED,
+  //   additionalDocumentStatus: DocStatus.APPROVED,
+  //   overallStatus: OverallDocStatus.APPROVED,
+  // };
 
-  const docRecord = await prisma.businessAccountDoc.findUnique({
-    where: { businessAccountId: kycSubmission.businessAccountId },
-  });
+  // const docRecord = await prisma.businessAccountDoc.findUnique({
+  //   where: { businessAccountId: kycSubmission.businessAccountId },
+  // });
 
-  if (docRecord) {
-    await prisma.businessAccountDoc.update({
-      where: { id: docRecord.id },
-      data: docUpdateData,
-    });
-  }
+  // if (docRecord) {
+  //   await prisma.businessAccountDoc.update({
+  //     where: { id: docRecord.id },
+  //     data: docUpdateData,
+  //   });
+  // }
 
   const updatedKYC = await prisma.businessKYC.update({
     where: { id: kycId },
@@ -138,25 +138,25 @@ export const rejectBusinessKYC = async (
     return prisma.businessKYC.findUniqueOrThrow({ where: { id: kycId } });
   }
 
-  const docUpdateData: any = {
-    registrationCertificateStatus: DocStatus.REJECTED,
-    articleOfAssociationStatus: DocStatus.REJECTED,
-    utilityBillStatus: DocStatus.REJECTED,
-    companyStatusReportsStatus: DocStatus.REJECTED,
-    additionalDocumentStatus: DocStatus.REJECTED,
-    overallStatus: OverallDocStatus.REJECTED,
-  };
+  // const docUpdateData: any = {
+  //   registrationCertificateStatus: DocStatus.REJECTED,
+  //   articleOfAssociationStatus: DocStatus.REJECTED,
+  //   utilityBillStatus: DocStatus.REJECTED,
+  //   companyStatusReportsStatus: DocStatus.REJECTED,
+  //   additionalDocumentStatus: DocStatus.REJECTED,
+  //   overallStatus: OverallDocStatus.REJECTED,
+  // };
 
-  const docRecord = await prisma.businessAccountDoc.findUnique({
-    where: { businessAccountId: kycSubmission.businessAccountId },
-  });
+  // const docRecord = await prisma.businessAccountDoc.findUnique({
+  //   where: { businessAccountId: kycSubmission.businessAccountId },
+  // });
 
-  if (docRecord) {
-    await prisma.businessAccountDoc.update({
-      where: { id: docRecord.id },
-      data: docUpdateData,
-    });
-  }
+  // if (docRecord) {
+  //   await prisma.businessAccountDoc.update({
+  //     where: { id: docRecord.id },
+  //     data: docUpdateData,
+  //   });
+  // }
 
   const updatedKYC = await prisma.businessKYC.update({
     where: { id: kycId },
@@ -216,26 +216,26 @@ export const approveIndividualKYC = async (
     return prisma.individualKYC.findUniqueOrThrow({ where: { id: kycId } });
   }
 
-  const docUpdateData: any = {
-    recentProofOfAddressStatus: DocStatus.APPROVED,
-    recentSelfieWithIDStatus: DocStatus.APPROVED,
-    proofOfValidIDStatus: DocStatus.APPROVED,
-    proofOfValidIDBackViewStatus: DocStatus.APPROVED,
-    recentBankStatementStatus: DocStatus.APPROVED,
-    additionalDocumentsStatus: DocStatus.APPROVED,
-    overallStatus: OverallDocStatus.APPROVED,
-  };
+  // const docUpdateData: any = {
+  //   recentProofOfAddressStatus: DocStatus.APPROVED,
+  //   recentSelfieWithIDStatus: DocStatus.APPROVED,
+  //   proofOfValidIDStatus: DocStatus.APPROVED,
+  //   proofOfValidIDBackViewStatus: DocStatus.APPROVED,
+  //   recentBankStatementStatus: DocStatus.APPROVED,
+  //   additionalDocumentsStatus: DocStatus.APPROVED,
+  //   overallStatus: OverallDocStatus.APPROVED,
+  // };
 
-  const docRecord = await prisma.individualAccountDoc.findUnique({
-    where: { userId: kycSubmission.userId },
-  });
+  // const docRecord = await prisma.individualAccountDoc.findUnique({
+  //   where: { userId: kycSubmission.userId },
+  // });
 
-  if (docRecord) {
-    await prisma.individualAccountDoc.update({
-      where: { id: docRecord.id },
-      data: docUpdateData,
-    });
-  }
+  // if (docRecord) {
+  //   await prisma.individualAccountDoc.update({
+  //     where: { id: docRecord.id },
+  //     data: docUpdateData,
+  //   });
+  // }
 
   const updatedKYC = await prisma.individualKYC.update({
     where: { id: kycId },
@@ -263,26 +263,26 @@ export const rejectIndividualKYC = async (
     return prisma.individualKYC.findUniqueOrThrow({ where: { id: kycId } });
   }
 
-  const docUpdateData: any = {
-    recentProofOfAddressStatus: DocStatus.REJECTED,
-    recentSelfieWithIDStatus: DocStatus.REJECTED,
-    proofOfValidIDStatus: DocStatus.REJECTED,
-    proofOfValidIDBackViewStatus: DocStatus.REJECTED,
-    recentBankStatementStatus: DocStatus.REJECTED,
-    additionalDocumentsStatus: DocStatus.REJECTED,
-    overallStatus: OverallDocStatus.REJECTED,
-  };
+  // const docUpdateData: any = {
+  //   recentProofOfAddressStatus: DocStatus.REJECTED,
+  //   recentSelfieWithIDStatus: DocStatus.REJECTED,
+  //   proofOfValidIDStatus: DocStatus.REJECTED,
+  //   proofOfValidIDBackViewStatus: DocStatus.REJECTED,
+  //   recentBankStatementStatus: DocStatus.REJECTED,
+  //   additionalDocumentsStatus: DocStatus.REJECTED,
+  //   overallStatus: OverallDocStatus.REJECTED,
+  // };
 
-  const docRecord = await prisma.individualAccountDoc.findUnique({
-    where: { userId: kycSubmission.userId },
-  });
+  // const docRecord = await prisma.individualAccountDoc.findUnique({
+  //   where: { userId: kycSubmission.userId },
+  // });
 
-  if (docRecord) {
-    await prisma.individualAccountDoc.update({
-      where: { id: docRecord.id },
-      data: docUpdateData,
-    });
-  }
+  // if (docRecord) {
+  //   await prisma.individualAccountDoc.update({
+  //     where: { id: docRecord.id },
+  //     data: docUpdateData,
+  //   });
+  // }
 
   const updatedKYC = await prisma.individualKYC.update({
     where: { id: kycId },
