@@ -278,6 +278,7 @@ model Director {
   identificationDocumentProofUrl    String?
   residentialAddressUrlProof        String?
   residentialAddressUrlProofSizeKB  Float?
+  identificationDocumentProofUrlSizeKB    Float?
   isShareholder                     Boolean                     @default(false)
   percentageShareholding            Float?
 
@@ -302,7 +303,7 @@ model Shareholder {
   validIdUrl                        String?
   proofOfAddressUrl                 String?
   taxNumber                         String?
-  validIdUrSizeKB                   Float?
+  validIdUrlSizeKB                   Float?
   proofOfAddressUrlSizeKB           Float?
   legalEntityName                   String?
   countryOfRegistrationIncorporation String?
