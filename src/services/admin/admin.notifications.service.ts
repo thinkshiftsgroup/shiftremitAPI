@@ -25,7 +25,7 @@ export class AdminNotificationService {
       usernameFilter,
       countryFilter,
       notificationTypeFilter,
-      isDismissed = false,
+      isDismissed,
     } = params;
 
     const skip = (page - 1) * pageSize;
