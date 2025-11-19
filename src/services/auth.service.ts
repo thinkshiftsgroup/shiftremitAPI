@@ -252,7 +252,7 @@ export const loginUser = async (
     throw new Error("Invalid credentials.");
   }
 
-  if (user.isDeleted) {
+  if (user.isBanned) {
     throw new Error(
       "Account is inactive. Please contact administrator for assistance."
     );
