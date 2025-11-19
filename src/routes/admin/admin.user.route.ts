@@ -8,6 +8,7 @@ import {
   updateBusinessAccountController,
   toggleUserIsVerified,
   toggleUserIsDeleted,
+  toggleUserIsBanned,
 } from "@controllers/admin/admin.users.controller";
 import asyncHandler from "@utils/asyncHandler";
 import { adminProtect } from "@middlewares/auth.middleware";
@@ -35,4 +36,5 @@ router.patch(
 
 router.patch("/:userId/verify", asyncHandler(toggleUserIsVerified));
 router.patch("/:userId/soft-delete", asyncHandler(toggleUserIsDeleted));
+router.patch("/:userId/ban", asyncHandler(toggleUserIsBanned));
 export const adminUsersRouter = router;

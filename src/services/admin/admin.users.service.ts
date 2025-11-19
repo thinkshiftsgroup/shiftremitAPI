@@ -437,3 +437,14 @@ export const toggleUserVerification = async (
   });
   return updatedUser;
 };
+
+export const toggleUserBanned = async (
+  userId: string,
+  status: boolean
+): Promise<User> => {
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: { isBanned: status },
+  });
+  return updatedUser;
+};

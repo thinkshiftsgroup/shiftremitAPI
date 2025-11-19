@@ -65,6 +65,7 @@ model User {
   recipients              Recipient[]
   businessAccount         BusinessAccount?
   isDeleted               Boolean                 @default(false)
+    isBanned               Boolean                 @default(false)
 }
 
 model Biodata {

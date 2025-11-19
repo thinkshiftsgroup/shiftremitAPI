@@ -13,6 +13,7 @@ import {
   BusinessAccountUpdatePayload,
   toggleUserVerification,
   toggleUserSoftDelete,
+  toggleUserBanned,
 } from "@services/admin/admin.users.service";
 import { DocStatus } from "@prisma/client";
 
@@ -321,5 +322,25 @@ export const toggleUserIsDeleted = async (req: Request, res: Response) => {
     res
       .status(500)
       .json({ message: "Failed to toggle user soft-delete status" });
+  }
+};
+
+export const toggleUserIsBanned = async (req: Request, res: Response) => {
+  const userId = req.params.userId;
+  const { isBanned } = req.body;
+  if (!userId || typeof isBanned !== "boolean") {
+    return res.status(400).json({
+      message: "User ID and a boolean value for isBanned are required",
+    });
+  }
+
+  try {
+    const updatedUser = await toggleUserSoftDelete(userId, isBanned);
+    res.status(200).json({
+      message: `User banned status set to ${isBanned ? "banned" : "unbanned"}`,
+      data: updatedUser,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to toggle user banned status" });
   }
 };
