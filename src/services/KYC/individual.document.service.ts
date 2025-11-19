@@ -1,6 +1,6 @@
 import { MulterFile } from "src/types/Upload";
 import { uploadMultipleToCloudinary } from "@utils/cloudinary";
-import { DocStatus } from "@prisma/client";
+import { DocStatus, IndividualAccountDoc } from "@prisma/client";
 import prisma from "@config/db";
 
 export const docMapping = {
@@ -30,8 +30,12 @@ export const uploadAndSaveDocuments = async (
     throw new Error("Cloudinary upload failed.");
   }
 
+  const file = files[0];
+  const sizeKB = file.size / 1024;
+
   const docUrl = uploadedUrls[0];
   const statusField = docMapping[docType];
+  const sizeField = `${docType}SizeKB` as keyof IndividualAccountDoc;
 
   let docRecord = await prisma.individualAccountDoc.findUnique({
     where: { userId },
@@ -39,6 +43,7 @@ export const uploadAndSaveDocuments = async (
 
   const updateData: any = {
     [docType]: docUrl,
+    [sizeField]: sizeKB,
     [statusField]: "IN_REVIEW",
     overallStatus: "PENDING_REVIEW",
   };

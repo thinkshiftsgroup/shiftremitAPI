@@ -2,6 +2,7 @@ import { MulterFile } from "src/types/Upload";
 import { uploadMultipleToCloudinary } from "@utils/cloudinary";
 import { DocStatus, OverallDocStatus } from "@prisma/client";
 import prisma from "@config/db";
+import { BusinessAccountDoc } from "@prisma/client";
 
 export const docMapping = {
   businessRegistrationIncorporationCertificate: "registrationCertificateStatus",
@@ -27,10 +28,12 @@ export const uploadAndSaveBusinessDocuments = async (
   if (!uploadedUrls || uploadedUrls.length === 0) {
     throw new Error("Cloudinary upload failed.");
   }
+  const file = files[0];
+  const sizeKB = file.size / 1024;
 
   const docUrl = uploadedUrls[0];
   const statusField = docMapping[docType];
-
+  const sizeField = `${docType}SizeKB` as keyof BusinessAccountDoc;
   const businessAccount = await prisma.businessAccount.findUnique({
     where: { userId },
     select: { id: true },
@@ -46,6 +49,7 @@ export const uploadAndSaveBusinessDocuments = async (
 
   const updateData: any = {
     [docType]: docUrl,
+    [sizeField]: sizeKB,
     [statusField]: DocStatus.IN_REVIEW,
     overallStatus: "PENDING_REVIEW",
   };

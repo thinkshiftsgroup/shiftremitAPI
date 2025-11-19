@@ -1,329 +1,354 @@
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "mongodb"
-  url      = env("DATABASE_URL")
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
 }
 
 
 enum DocStatus {
-  PENDING
-  APPROVED
-  IN_REVIEW
-  REJECTED
+  PENDING
+  APPROVED
+  IN_REVIEW
+  REJECTED
 }
 
 enum OverallDocStatus {
-  NOT_STARTED
-  PENDING_UPLOAD
-  PENDING_REVIEW
-  APPROVED
-  REJECTED
+  NOT_STARTED
+  PENDING_UPLOAD
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
 }
 
 enum EntityType {
-  NATURAL_PERSON
-  LEGAL_ENTITY
+  NATURAL_PERSON
+  LEGAL_ENTITY
 }
-model User {
-  id                    String                 @id @default(auto()) @map("_id") @db.ObjectId
-  email                 String                 @unique
-  username              String                 @unique 
-  fullName              String 
-  firstname             String?
-  lastname              String?
-  middlename            String?
-  politicalExposure     String?        
-  phoneNumber           String?      
-  country               String?          
-  userType              String                 @default("user")
-  password              String                 
-  profilePhotoUrl       String?
-  isVerified            Boolean                @default(false)
-  verificationCode      String?                @unique
-  verificationCodeExpires DateTime?
-  resetPasswordToken    String?                @unique
-  resetPasswordExpires  DateTime?
-  createdAt             DateTime               @default(now())
-  updatedAt             DateTime               @updatedAt
-  lastActive            DateTime?
-  gender                String?
-  dob                   DateTime?
-  meansOfIdentification String?    
-  validIDNumber         String?
-  idDate                DateTime?
-  fullAddress           String?
-  taxNumber             String?
-  purposeOfShiftremit   String?
 
-  alertWhenGbpToNgnDropsBelow Float?
+enum NotificationType {
+  KYC_INDIVIDUAL_SUBMITTED
+  KYC_BUSINESS_SUBMITTED
+  INDIVIDUAL_DOC_UPDATED
+  BUSINESS_DOC_UPDATED
+  NEW_USER_REGISTERED
+  USER_BANNED
+  USER_UNBANNED
+  TRANSFER_FAILED
+}
+
+model User {
+  id                    String                 @id @default(auto()) @map("_id") @db.ObjectId
+  email                 String                 @unique
+  username              String                 @unique 
+  fullName              String 
+  firstname             String?
+  lastname              String?
+  middlename            String?
+  politicalExposure     String?        
+  phoneNumber           String?      
+  country               String?          
+  userType              String                 @default("user")
+  password              String                 
+  profilePhotoUrl       String?
+  isVerified            Boolean                @default(false)
+  verificationCode      String?                @unique
+  verificationCodeExpires DateTime?
+  resetPasswordToken    String?                @unique
+  resetPasswordExpires  DateTime?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  lastActive            DateTime?
+  gender                String?
+  dob                   DateTime?
+  meansOfIdentification String?    
+  validIDNumber         String?
+  idDate                DateTime?
+  fullAddress           String?
+  taxNumber             String?
+  purposeOfShiftremit   String?
+
+  alertWhenGbpToNgnDropsBelow Float?
   alertWhenNgnToGbpDropsBelow Float?
   sendMeNotifs                Boolean                @default(false)
-  
-  biodata               Biodata?
-  individualAccountDoc  IndividualAccountDoc?
-  kycSubmission         IndividualKYC? 
-  transfers             BankTransfer[]
-  recipients              Recipient[]
-  businessAccount         BusinessAccount?
-  isDeleted               Boolean                 @default(false)
-    isBanned               Boolean                 @default(false)
+  
+  biodata               Biodata?
+  individualAccountDoc  IndividualAccountDoc?
+  kycSubmission         IndividualKYC? 
+  transfers             BankTransfer[]
+  recipients              Recipient[]
+  businessAccount         BusinessAccount?
+  isDeleted               Boolean                 @default(false)
+  isBanned                Boolean                 @default(false)
+  adminNotifications      AdminNotification[]
 }
 
 model Biodata {
-  id            String    @id @default(auto()) @map("_id") @db.ObjectId
-  userId        String    @unique @db.ObjectId
-  dateOfBirth   DateTime  @default(now())
-  country       String?
-  pronouns      String?
-  phone         String?
-  city          String?
-  role          String?
-  industry      String?
-  tags          String?
-  headline      String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String    @unique @db.ObjectId
+  dateOfBirth   DateTime  @default(now())
+  country       String?
+  pronouns      String?
+  phone         String?
+  city          String?
+  role          String?
+  industry      String?
+  tags          String?
+  headline      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model IndividualKYC {
-  id                String           @id @default(auto()) @map("_id") @db.ObjectId
-  userId            String           @unique @db.ObjectId
-  submissionDate    DateTime         @default(now())
-  status            OverallDocStatus @default(NOT_STARTED)
-  
-  user              User             @relation(fields: [userId], references: [id])
+  id                String           @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String           @unique @db.ObjectId
+  submissionDate    DateTime         @default(now())
+  status            OverallDocStatus @default(NOT_STARTED)
+  
+  user              User             @relation(fields: [userId], references: [id])
 }
 
 model RatesData {
-  id            String    @id @default(auto()) @map("_id") @db.ObjectId
-  benchmarkGBP  Float
-  rateNGN       Float
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  benchmarkGBP  Float
+  rateNGN       Float
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 
 model RateHistory {
-  id            String    @id @default(auto()) @map("_id") @db.ObjectId
-  benchmarkGBP  Float
-  rateNGN       Float
-  recordedAt    DateTime  @default(now()) 
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  benchmarkGBP  Float
+  rateNGN       Float
+  recordedAt    DateTime  @default(now()) 
 }
 
 enum TransferStatus {
-  PENDING
-  PROCESSING
-  ABANDONED
-  COMPLETED
-  FAILED
-  REJECTED
-  CANCELED
+  PENDING
+  PROCESSING
+  ABANDONED
+  COMPLETED
+  FAILED
+  REJECTED
+  CANCELED
 }
 
 model BankTransfer {
-  id                         String           @id @default(auto()) @map("_id") @db.ObjectId
-  userId                     String           @db.ObjectId
-  amount                     Float
-  convertedNGNAmount         Float?
-  convertedGBPAmount         Float?
-  fromCurrency               String
-  toCurrency                 String
-  recipientBankName          String
-  recipientAccountNumber     String
-  recipientFullName          String
-  recipientEmail             String
-  purpose                    String
-  pdfFile                    String?
-  userReference              String?
-  sortCode                   String?
-  isRecipientBusinessAccount Boolean
-  transferReference          String           @unique
-  status                     TransferStatus   @default(PENDING)
-  createdAt                  DateTime         @default(now())
-  updatedAt                  DateTime         @updatedAt
-  user                       User             @relation(fields: [userId], references: [id])
-  conversionRate             Float?
+  id                         String           @id @default(auto()) @map("_id") @db.ObjectId
+  userId                     String           @db.ObjectId
+  amount                     Float
+  convertedNGNAmount         Float?
+  convertedGBPAmount         Float?
+  fromCurrency               String
+  toCurrency                 String
+  recipientBankName          String
+  recipientAccountNumber     String
+  recipientFullName          String
+  recipientEmail             String
+  purpose                    String
+  pdfFile                    String?
+  userReference              String?
+  sortCode                   String?
+  isRecipientBusinessAccount Boolean
+  transferReference          String           @unique
+  status                     TransferStatus   @default(PENDING)
+  createdAt                  DateTime         @default(now())
+  updatedAt                  DateTime         @updatedAt
+  user                       User             @relation(fields: [userId], references: [id])
+  conversionRate             Float?
 }
 
 model Recipient {
-  id                         String         @id @default(auto()) @map("_id") @db.ObjectId
-  userId                     String         @db.ObjectId
-  recipientBankName          String
-  recipientAccountNumber     String
-  recipientFullName          String
-  recipientEmail             String?
-  recipientMobileNumber      String?
-  isRecipientBusinessAccount Boolean        @default(false)
-  sortCode                   String?
-  purpose                    String?
-  user                       User           @relation(fields: [userId], references: [id])
-  
-  createdAt                  DateTime       @default(now())
-  updatedAt                  DateTime       @updatedAt
+  id                         String         @id @default(auto()) @map("_id") @db.ObjectId
+  userId                     String         @db.ObjectId
+  recipientBankName          String
+  recipientAccountNumber     String
+  recipientFullName          String
+  recipientEmail             String?
+  recipientMobileNumber      String?
+  isRecipientBusinessAccount Boolean        @default(false)
+  sortCode                   String?
+  purpose                    String?
+  user                       User           @relation(fields: [userId], references: [id])
+  
+  createdAt                  DateTime       @default(now())
+  updatedAt                  DateTime       @updatedAt
 
-  @@unique([userId, recipientAccountNumber, recipientBankName]) 
+  @@unique([userId, recipientAccountNumber, recipientBankName]) 
 }
 
 
 
 model AccountData {
-  id                 String    @id @default(auto()) @map("_id") @db.ObjectId
-  GBPAccountName     String
-  GBPAccountNumber   String    @unique
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  id                 String    @id @default(auto()) @map("_id") @db.ObjectId
+  GBPAccountName     String
+  GBPAccountNumber   String    @unique
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 }
 
 model IndividualAccountDoc {
-  id                                String    @id @default(auto()) @map("_id") @db.ObjectId
-  userId                            String    @db.ObjectId
-  recentProofOfAddress              String?
+  id                                String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId                            String    @db.ObjectId
+  recentProofOfAddress              String?
+  recentProofOfAddressSizeKB        Float?
   recentSelfieWithID                String?
+  recentSelfieWithIDSizeKB          Float?
   proofOfValidID                    String?
+  proofOfValidIDSizeKB              Float?
   proofOfValidIDBackView            String?
+  proofOfValidIDBackViewSizeKB      Float?
   recentBankStatement               String?
+  recentBankStatementSizeKB         Float?
   additionalDocuments               String?
-  
-  recentProofOfAddressStatus        DocStatus @default(PENDING)
-  recentSelfieWithIDStatus          DocStatus @default(PENDING)
-  proofOfValidIDStatus              DocStatus @default(PENDING)
-  proofOfValidIDBackViewStatus      DocStatus @default(PENDING)
-  recentBankStatementStatus         DocStatus @default(PENDING)
-  additionalDocumentsStatus         DocStatus @default(PENDING)
+  additionalDocumentsSizeKB         Float?
+  
+  recentProofOfAddressStatus        DocStatus @default(PENDING)
+  recentSelfieWithIDStatus          DocStatus @default(PENDING)
+  proofOfValidIDStatus              DocStatus @default(PENDING)
+  proofOfValidIDBackViewStatus      DocStatus @default(PENDING)
+  recentBankStatementStatus         DocStatus @default(PENDING)
+  additionalDocumentsStatus         DocStatus @default(PENDING)
 
-  overallStatus                     OverallDocStatus @default(PENDING_UPLOAD)
-  createdAt                         DateTime  @default(now())
-  updatedAt                         DateTime  @updatedAt
-  
-  user                              User      @relation(fields: [userId], references: [id])
-  
-  @@unique([userId])
+  overallStatus                     OverallDocStatus @default(PENDING_UPLOAD)
+  createdAt                         DateTime  @default(now())
+  updatedAt                         DateTime  @updatedAt
+  
+  user                              User      @relation(fields: [userId], references: [id])
+  
+  @@unique([userId])
 }
 
 
 
 model BusinessAccount {
-  id                                String                      @id @default(auto()) @map("_id") @db.ObjectId
-  userId                            String                      @unique @db.ObjectId
+  id                                String                      @id @default(auto()) @map("_id") @db.ObjectId
+  userId                            String                      @unique @db.ObjectId
 
-  businessName                      String
-  companyType                       String?
-  businessModel                     String?
-  incorporationNumber               String                      @unique
-  dateOfIncorporation               DateTime?
-  countryOfIncorporation            String?
-  taxNumber                         String?
-  companyAddress                    String?
-  zipCodePostcode                   String?
-  stateProvince                     String?
-  city                              String?
-  whatDoesTheBusinessDo             String?
-  companyWebsite                    String?
+  businessName                      String
+  companyType                       String?
+  businessModel                     String?
+  incorporationNumber               String                      @unique
+  dateOfIncorporation               DateTime?
+  countryOfIncorporation            String?
+  taxNumber                         String?
+  companyAddress                    String?
+  zipCodePostcode                   String?
+  stateProvince                     String?
+  city                              String?
+  whatDoesTheBusinessDo             String?
+  companyWebsite                    String?
 
-  dob                               DateTime?
-  mobileNumber                      String?
-  meansOfIdentification             String?
-  validIDNumber                     String?
-  idDate                            DateTime?
-  fullAddress                       String?
-  countryOfResidence                String?
-  purposeOfShiftremit               String?
+  dob                               DateTime?
+  mobileNumber                      String?
+  meansOfIdentification             String?
+  validIDNumber                     String?
+  idDate                            DateTime?
+  fullAddress                       String?
+  countryOfResidence                String?
+  purposeOfShiftremit               String?
 
-  user                              User                        @relation(fields: [userId], references: [id])
-  directors                         Director[]
-  shareholders                      Shareholder[]
-  peps                              PoliticallyExposedPerson[]
-  businessAccountDocs               BusinessAccountDoc?
-  kycSubmission                   BusinessKYC?
-  createdAt                         DateTime                    @default(now())
-  updatedAt                         DateTime                    @updatedAt
+  user                              User                        @relation(fields: [userId], references: [id])
+  directors                         Director[]
+  shareholders                      Shareholder[]
+  peps                              PoliticallyExposedPerson[]
+  businessAccountDocs               BusinessAccountDoc?
+  kycSubmission                   BusinessKYC?
+  createdAt                         DateTime                    @default(now())
+  updatedAt                         DateTime                    @updatedAt
 }
 
 model Director {
-  id                                String                      @id @default(auto()) @map("_id") @db.ObjectId
-  businessAccountId                 String                      @db.ObjectId
+  id                                String                      @id @default(auto()) @map("_id") @db.ObjectId
+  businessAccountId                 String                      @db.ObjectId
 
-  firstname                         String
-  lastname                          String
-  position                          String?
-  dateOfBirth                       DateTime?
-  nationality                       String?
-  residentialAddress                String?
+  firstname                         String
+  lastname                          String
+  position                          String?
+  dateOfBirth                       DateTime?
+  nationality                       String?
+  residentialAddress                String?
 
-  identificationDocument            String?
-  idNumber                          String?
-  issuedCountry                     String?
-  identificationDocumentProofUrl    String?
-  residentialAddressUrlProof        String?
+  identificationDocument            String?
+  idNumber                          String?
+  issuedCountry                     String?
+  identificationDocumentProofUrl    String?
+  residentialAddressUrlProof        String?
+  residentialAddressUrlProofSizeKB  Float?
+  isShareholder                     Boolean                     @default(false)
+  percentageShareholding            Float?
 
-  isShareholder                     Boolean                     @default(false)
-  percentageShareholding            Float?
-
-  businessAccount                   BusinessAccount             @relation(fields: [businessAccountId], references: [id])
+  businessAccount                   BusinessAccount             @relation(fields: [businessAccountId], references: [id])
 }
 
 model Shareholder {
-  id                                String                      @id @default(auto()) @map("_id") @db.ObjectId
-  businessAccountId                 String                      @db.ObjectId
-  entityType                        EntityType                  @default(NATURAL_PERSON)
+  id                                String                      @id @default(auto()) @map("_id") @db.ObjectId
+  businessAccountId                 String                      @db.ObjectId
+  entityType                        EntityType                  @default(NATURAL_PERSON)
 
-  percentageSharesOwned             Float
+  percentageSharesOwned             Float
 
-  firstname                         String?
-  lastname                          String?
-  dateOfBirth                       DateTime?
-  nationality                       String?
-  identificationDocument            String?
-  idNumber                          String?
-  issuedCountry                     String?
-  residentialAddress                String?
-  validIdUrl                        String?
-  proofOfAddressUrl                 String?
-  taxNumber                         String?
+  firstname                         String?
+  lastname                          String?
+  dateOfBirth                       DateTime?
+  nationality                       String?
+  identificationDocument            String?
+  idNumber                          String?
+  issuedCountry                     String?
+  residentialAddress                String?
+  validIdUrl                        String?
+  proofOfAddressUrl                 String?
+  taxNumber                         String?
+  validIdUrSizeKB                   Float?
+  proofOfAddressUrlSizeKB           Float?
+  legalEntityName                   String?
+  countryOfRegistrationIncorporation String?
+  registrationIncorporationNumber   String?
 
-  legalEntityName                   String?
-  countryOfRegistrationIncorporation String?
-  registrationIncorporationNumber   String?
-
-  businessAccount                   BusinessAccount             @relation(fields: [businessAccountId], references: [id])
+  businessAccount                   BusinessAccount             @relation(fields: [businessAccountId], references: [id])
 }
 
 model PoliticallyExposedPerson {
-  id                                String                      @id @default(auto()) @map("_id") @db.ObjectId
-  businessAccountId                 String                      @db.ObjectId
+  id                                String                      @id @default(auto()) @map("_id") @db.ObjectId
+  businessAccountId                 String                      @db.ObjectId
 
-  name                              String
-  position                          String?
-  pepStatusDescription              String?
+  name                              String
+  position                          String?
+  pepStatusDescription              String?
 
-  businessAccount                   BusinessAccount             @relation(fields: [businessAccountId], references: [id])
+  businessAccount                   BusinessAccount             @relation(fields: [businessAccountId], references: [id])
 }
 
 model BusinessAccountDoc {
-  id                                String                      @id @default(auto()) @map("_id") @db.ObjectId
-  businessAccountId                 String                      @unique @db.ObjectId
+  id                                String                      @id @default(auto()) @map("_id") @db.ObjectId
+  businessAccountId                 String                      @unique @db.ObjectId
 
-  businessRegistrationIncorporationCertificate String?
-  articleOfAssociation              String?
-  operatingBusinessUtilityBill      String?
-  companyStatusReports              String?
-  additionalDocument                String?
+  businessRegistrationIncorporationCertificate String?
+  businessRegistrationIncorporationCertificateSizeKB         Float?
+  articleOfAssociation                  String?
+  articleOfAssociationSizeKB            Float?
+  operatingBusinessUtilityBill          String?
+  operatingBusinessUtilityBillSizeKB    Float?
+  companyStatusReports                  String?
+  companyStatusReportsSizeKB            Float?
+  additionalDocument                    String?
+  additionalDocumentSizeKB              Float?
 
-  registrationCertificateStatus     DocStatus                   @default(PENDING)
-  articleOfAssociationStatus        DocStatus                   @default(PENDING)
-  utilityBillStatus                 DocStatus                   @default(PENDING)
-  companyStatusReportsStatus        DocStatus                   @default(PENDING)
-  additionalDocumentStatus          DocStatus                   @default(PENDING)
+  registrationCertificateStatus     DocStatus                   @default(PENDING)
+  articleOfAssociationStatus        DocStatus                   @default(PENDING)
+  utilityBillStatus                 DocStatus                   @default(PENDING)
+  companyStatusReportsStatus        DocStatus                   @default(PENDING)
+  additionalDocumentStatus          DocStatus                   @default(PENDING)
 
-  overallStatus                     OverallDocStatus            @default(PENDING_UPLOAD)
+  overallStatus                     OverallDocStatus            @default(PENDING_UPLOAD)
 
-  businessAccount                   BusinessAccount             @relation(fields: [businessAccountId], references: [id])
+  businessAccount                   BusinessAccount             @relation(fields: [businessAccountId], references: [id])
 
-  createdAt                         DateTime                    @default(now())
-  updatedAt                         DateTime                    @updatedAt
+  createdAt                         DateTime                    @default(now())
+  updatedAt                         DateTime                    @updatedAt
 }
 
 model BusinessKYC {
@@ -333,4 +358,19 @@ model BusinessKYC {
   status            OverallDocStatus @default(NOT_STARTED)
   
   businessAccount   BusinessAccount @relation(fields: [businessAccountId], references: [id])
+}
+
+model AdminNotification {
+  id                 String          @id @default(auto()) @map("_id") @db.ObjectId
+  
+  userId             String          @db.ObjectId
+  type               NotificationType
+  message            String
+  linkToResource     String?
+  
+  isRead             Boolean       @default(false)
+  isDismissed        Boolean       @default(false)
+  
+  createdAt          DateTime       @default(now())
+  user               User          @relation(fields: [userId], references: [id])
 }
