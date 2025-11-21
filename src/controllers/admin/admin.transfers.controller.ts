@@ -6,6 +6,7 @@ import {
   deleteAllTransfers,
   deleteSingleTransfer,
   deleteAllTransfersExcept,
+  fetchUserTransfers,
 } from "@services/admin/admin.transfers.service";
 import { SortOrder, FilterOptions } from "src/types/Transfers";
 const validStatuses: TransferStatus[] = [
@@ -108,6 +109,39 @@ export const getAllTransfers = async (req: Request, res: Response) => {
       message: "Failed to fetch dashboard data and transfers.",
       details: error.message,
     });
+  }
+};
+export const getUserTransfers = async (req: Request, res: Response) => {
+  try {
+    const userId = req.params.userId;
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required." });
+    }
+
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+
+    const status = req.query.status as TransferStatus | undefined;
+    const sortByAmount = req.query.sortByAmount as "asc" | "desc" | undefined;
+
+    if (status && !validStatuses.includes(status)) {
+      return res
+        .status(400)
+        .json({ message: "Invalid transfer status provided." });
+    }
+
+    const result = await fetchUserTransfers(
+      userId,
+      page,
+      limit,
+      status,
+      sortByAmount
+    );
+
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Error fetching user transfers:", error);
+    res.status(500).json({ message: "Internal server error." });
   }
 };
 export const patchTransferStatus = async (req: Request, res: Response) => {

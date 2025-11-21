@@ -4,6 +4,7 @@ import {
   patchTransferStatus,
   adminDeleteAllTransfersExceptReference,
   adminDeleteTransfer,
+  getUserTransfers,
 } from "@controllers/admin/admin.transfers.controller";
 import { adminProtect } from "@middlewares/auth.middleware";
 import asyncHandler from "@utils/asyncHandler";
@@ -15,6 +16,7 @@ router.post("/:transferId/status", asyncHandler(patchTransferStatus));
 router.get("/history", asyncHandler(getAllTransfers));
 
 router.delete("/:transferId", asyncHandler(adminDeleteTransfer));
+router.get("/user/:userId", asyncHandler(getUserTransfers));
 
 router.delete(
   "/except/:reference",

@@ -256,6 +256,67 @@ export const fetchAllTransfers = async (
     take: limit,
   });
 };
+export const fetchUserTransfers = async (
+  userId: string,
+  page: number = 1,
+  limit: number = 10,
+  status?: string,
+  sortByAmount?: "asc" | "desc"
+) => {
+  const skip = (page - 1) * limit;
+
+  let orderBy: Record<string, "asc" | "desc">;
+  if (sortByAmount) {
+    orderBy = { amount: sortByAmount };
+  } else {
+    orderBy = { createdAt: "desc" };
+  }
+
+  const where: any = {
+    userId: userId,
+  };
+
+  if (status) {
+    where.status = status as TransferStatus;
+  }
+
+  const [transfers, totalCount] = await prisma.$transaction([
+    prisma.bankTransfer.findMany({
+      where: where,
+      orderBy: orderBy,
+      include: {
+        user: {
+          select: {
+            username: true,
+            fullName: true,
+            email: true,
+            profilePhotoUrl: true,
+          },
+        },
+      },
+      skip: skip,
+      take: limit,
+    }),
+    prisma.bankTransfer.count({
+      where: where,
+    }),
+  ]);
+
+  const totalPages = Math.ceil(totalCount / limit);
+
+  return {
+    message: "Transfers fetched successfully",
+    data: transfers,
+    meta: {
+      totalCount: totalCount,
+      totalPages: totalPages,
+      currentPage: page,
+      limit: limit,
+      status: status,
+      sortByAmount: sortByAmount,
+    },
+  };
+};
 
 export const fetchDashboardData = async (
   page: number = 1,
