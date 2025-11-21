@@ -348,7 +348,7 @@ export const createBankTransfer = async (
     userId: input.userId,
     type: NotificationType.TRANSFER,
     message: `New PENDING transfer created (Ref: ${transferReference}) from ${input.fromCurrency} to ${input.toCurrency} for ${input.amount}.`,
-    linkToResource: `/admin/transfers}`,
+    linkToResource: `/admin/transfers`,
   });
 
   return { accountDetails: finalAccountDetails, transferReference };
