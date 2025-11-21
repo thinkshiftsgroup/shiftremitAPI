@@ -1,4 +1,5 @@
 import axios from "axios";
+import prisma from "@config/db";
 import { AxiosResponse } from "axios";
 
 interface CompetitorRate {
@@ -50,13 +51,14 @@ export interface SimplifiedRate {
   rate: number;
   retrievedRelative: string;
   rateRetrievalMessage: string;
+  imageUrl?: string;
 }
 
 export interface ProcessedMoniepointRates {
-  //moniepoint: SimplifiedRate;
   nala: SimplifiedRate;
   lemfi: SimplifiedRate;
   sendApp: SimplifiedRate;
+  shiftremit: SimplifiedRate;
 }
 
 const MONIEPOINT_URL =
@@ -65,21 +67,31 @@ const MONIEPOINT_URL =
 const DEFAULT_RATES: { [key: string]: SimplifiedRate } = {
   nala: {
     provider: "Nala",
-    rate: 1896,
+    rate: 1897,
     retrievedRelative: "updated 1-2 hrs",
     rateRetrievalMessage: "Boosted rate applied",
+    imageUrl: "https://shiftremit.com/images/brands/vec-6.svg",
   },
   lemfi: {
     provider: "LemFi",
-    rate: 1908,
+    rate: 1905,
     retrievedRelative: "updated 1-2 hrs",
     rateRetrievalMessage: "Boosted rate applied",
+    imageUrl: "https://shiftremit.com/images/brands/vec-4.svg",
   },
   sendApp: {
     provider: "Send App",
     rate: 1883,
     retrievedRelative: "updated 1-2 hrs",
     rateRetrievalMessage: "Boosted rate applied",
+    imageUrl: "https://shiftremit.com/images/brands/vec-6.svg",
+  },
+  shiftremit: {
+    provider: "Shift Remit",
+    rate: 0,
+    retrievedRelative: "Live calculation",
+    rateRetrievalMessage: "Rate calculation pending.",
+    imageUrl: "https://shiftremit.com/images/brands/vec-1.svg",
   },
 };
 
@@ -105,9 +117,23 @@ const makeMoniepointRequest =
     }
   };
 
+const getLatestBenchmarkRate = async (): Promise<number> => {
+  const latestRate = await prisma.rateHistory.findFirst({
+    orderBy: {
+      recordedAt: "desc",
+    },
+    select: {
+      benchmarkGBP: true,
+    },
+  });
+
+  return latestRate?.benchmarkGBP ?? 0;
+};
+
 export const fetchAggregatedFxRates =
   async (): Promise<ProcessedMoniepointRates | null> => {
     const response = await makeMoniepointRequest();
+    const benchmarkGBP = await getLatestBenchmarkRate();
 
     if (!response || !response.success || !response.data) {
       return null;
@@ -121,21 +147,26 @@ export const fetchAggregatedFxRates =
         rate: rate.rate,
         retrievedRelative: rate.retrievedRelative,
         rateRetrievalMessage: rate.rateRetrievalMessage,
+        imageUrl:
+          DEFAULT_RATES[rate.provider.toLowerCase().replace(/\s/g, "")]
+            ?.imageUrl,
       });
       return map;
     }, new Map<string, SimplifiedRate>());
 
-    const moniepointRate: SimplifiedRate = {
-      provider: data.moniepointProvider,
-      rate: data.moniepointRate,
-      retrievedRelative: data.retrievedRelative,
-      rateRetrievalMessage: data.moniepointRateRetrievalMessage,
-    };
+    const lemfiRate = competitorRatesMap.get("LemFi") || DEFAULT_RATES.lemfi;
+    const shiftRemitRate = lemfiRate.rate + benchmarkGBP;
 
     return {
-      //   moniepoint: moniepointRate,
       nala: competitorRatesMap.get("Nala") || DEFAULT_RATES.nala,
-      lemfi: competitorRatesMap.get("LemFi") || DEFAULT_RATES.lemfi,
+      lemfi: lemfiRate,
       sendApp: competitorRatesMap.get("Send App") || DEFAULT_RATES.sendApp,
+      shiftremit: {
+        provider: DEFAULT_RATES.shiftremit.provider,
+        rate: shiftRemitRate,
+        retrievedRelative: DEFAULT_RATES.shiftremit.retrievedRelative,
+        rateRetrievalMessage: `Based on LemFi rate plus ${benchmarkGBP} GBP benchmark.`,
+        imageUrl: DEFAULT_RATES.shiftremit.imageUrl,
+      },
     };
   };
