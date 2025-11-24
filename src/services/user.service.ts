@@ -4,6 +4,11 @@ import { MulterFile } from "src/types/Upload";
 import { uploadToCloudinary } from "@utils/cloudinary";
 import { hashPassword, comparePassword } from "@utils/helpers";
 import { InCorrectOldPasswordError } from "@middlewares/error.custom";
+import { ActivityLogService } from "./admin/admin.logs.service";
+import { ActivityType } from "@prisma/client";
+
+const activityLogService = new ActivityLogService();
+
 export async function getBasicProfile(userId: string) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -72,6 +77,15 @@ export async function updateBasicProfile(userId: string, data: UserUpdateData) {
     },
   });
 
+  await activityLogService.logActivity({
+    userId,
+    activityType: ActivityType.PROFILE_UPDATE,
+    description: `User profile details updated. Fields changed: ${Object.keys(
+      data
+    ).join(", ")}`,
+    metadata: data,
+  });
+
   return updatedUser;
 }
 
@@ -106,6 +120,15 @@ export async function updateProfilePhoto(
       profilePhotoUrl: true,
       biodata: true,
     },
+  });
+
+  await activityLogService.logActivity({
+    userId,
+    activityType: ActivityType.PROFILE_UPDATE,
+    description: "User profile photo URL updated.",
+    resourceType: "User",
+    resourceId: userId,
+    metadata: { newUrl: profilePhotoUrl },
   });
 
   return updatedUser;
@@ -143,6 +166,15 @@ export async function updateProfilePhotoApp(userId: string, file: MulterFile) {
     },
   });
 
+  await activityLogService.logActivity({
+    userId,
+    activityType: ActivityType.PROFILE_UPDATE,
+    description: "User profile photo uploaded and URL updated (via app).",
+    resourceType: "User",
+    resourceId: userId,
+    metadata: { newUrl: profilePhotoUrl, originalFileName: file.originalname },
+  });
+
   return updatedUser;
 }
 
@@ -176,5 +208,12 @@ export async function changePassword(
       password: hashedPassword,
     },
   });
+
+  await activityLogService.logActivity({
+    userId,
+    activityType: ActivityType.PASSWORD_CHANGE,
+    description: "User successfully changed their password.",
+  });
+
   return { success: true, message: "Password updated successfully" };
 }
