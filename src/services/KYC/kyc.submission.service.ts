@@ -1,8 +1,11 @@
 import prisma from "@config/db";
 import { OverallDocStatus, NotificationType } from "@prisma/client";
 import { AdminNotificationHelper } from "@utils/AdminNotificationHelper";
+import { ActivityLogService } from "@services/admin/admin.logs.service";
+import { ActivityType } from "@prisma/client";
 
 const notificationHelper = new AdminNotificationHelper();
+const activityLogService = new ActivityLogService();
 
 export const submitIndividualKYC = async (userId: string) => {
   const user = await prisma.user.findUnique({
@@ -95,6 +98,14 @@ export const submitIndividualKYC = async (userId: string) => {
     type: NotificationType.KYC_INDIVIDUAL_SUBMITTED,
     message: `New Individual KYC submitted by ${user.firstname} ${user.lastname} for review.`,
     linkToResource: `/admin/customers/${userId}`,
+  });
+
+  await activityLogService.logActivity({
+    userId,
+    activityType: ActivityType.KYC_INDIVIDUAL_SUBMITTED,
+    description: `Individual KYC submitted for review. Status: PENDING_REVIEW`,
+    resourceType: "IndividualKYC",
+    resourceId: userId,
   });
 
   return submittedKYC;
@@ -205,6 +216,15 @@ export const submitBusinessKYC = async (userId: string) => {
     type: NotificationType.KYC_BUSINESS_SUBMITTED,
     message: `New Business KYC submitted for '${businessName}' for review.`,
     linkToResource: `/admin/customers/${userId}`,
+  });
+
+  await activityLogService.logActivity({
+    userId,
+    activityType: ActivityType.KYC_BUSINESS_SUBMITTED,
+    description: `Business KYC submitted for '${businessName}' for review. Status: PENDING_REVIEW`,
+    resourceType: "BusinessKYC",
+    resourceId: businessAccount.id,
+    metadata: { businessName },
   });
 
   return submittedKYC;
