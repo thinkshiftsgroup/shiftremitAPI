@@ -271,53 +271,51 @@ export const createBankTransfer = async (
     },
   });
 
-  let fetchedAccountDetails: any;
-  if (input.fromCurrency !== "NGN") {
-    fetchedAccountDetails = await prisma.accountData.findFirst({});
-  }
-
-  const [user, accountDetails] = await Promise.all([
+  const [user, accountData] = await Promise.all([
     prisma.user.findUnique({
       where: { id: input.userId },
       select: { fullName: true, email: true },
     }),
-    input.fromCurrency === "NGN"
-      ? Promise.resolve(null)
-      : prisma.accountData.findFirst({}),
+    input.fromCurrency !== "NGN"
+      ? prisma.accountData.findFirst({})
+      : Promise.resolve(null),
   ]);
 
   let finalAccountDetails: any;
+  let senderDetails: any = null;
+
   if (input.fromCurrency === "NGN") {
     finalAccountDetails = {
       bankName: "Prospa capital MFB",
       accountNumber: "0111377577",
     };
-  } else {
-    finalAccountDetails = accountDetails;
+  } else if (input.fromCurrency === "GBP") {
+    if (accountData) {
+      finalAccountDetails = {
+        bankName: accountData.GBPAccountName,
+        accountNumber: accountData.GBPAccountNumber,
+      };
+
+      senderDetails = {
+        bankName: "PROSPA TECHNOLOGY LIMITED",
+        accountNumber: accountData.GBPAccountNumber,
+      };
+    } else {
+      console.error("AccountData not found for GBP transfer.");
+      finalAccountDetails = {};
+    }
   }
 
-  if (!user || !finalAccountDetails) {
-    if (input.fromCurrency !== "NGN") {
-      console.error("User or AccountData not found. Cannot send admin email.");
-    } else if (!user) {
-      console.error("User not found. Cannot send admin email.");
-    }
+  if (!user) {
+    console.error("User not found. Cannot send admin email.");
   } else {
     let subject: string;
     let htmlBody: string;
-    const senderDetails =
-      input.fromCurrency === "GBP" && finalAccountDetails
-        ? {
-            bankName: "PROSPA TECHNOLOGY LIMITED",
-            accountNumber: "87812060",
-            sortCode: finalAccountDetails.sortCode,
-          }
-        : null;
 
     if (input.fromCurrency === "GBP" && input.toCurrency === "NGN") {
       subject = `ACTION REQUIRED: New GBP to NGN Transfer (Ref: ${transferReference})`;
       htmlBody = generateAdminEmailHtml(
-        newTransfer,
+        newTransfer as any,
         user as { fullName: string; email: string },
         ngnEquivalent,
         effectiveRate,
@@ -328,7 +326,7 @@ export const createBankTransfer = async (
     } else if (input.fromCurrency === "NGN" && input.toCurrency === "GBP") {
       subject = `ACTION REQUIRED: New NGN to GBP Transfer (Ref: ${transferReference})`;
       htmlBody = generateNgnToGbpAdminEmailHtml(
-        newTransfer,
+        newTransfer as any,
         user as { fullName: string; email: string },
         gbpEquivalent,
         effectiveRate
@@ -344,6 +342,7 @@ export const createBankTransfer = async (
       htmlBody: htmlBody,
     });
   }
+
   await notificationHelper.createNotification({
     userId: input.userId,
     type: NotificationType.TRANSFER,

@@ -39,6 +39,9 @@ export const requestBankTransfer = async (req: Request, res: Response) => {
     isRecipientBusinessAccount,
   } = req.body as TransferRequestBody;
 
+  const sourceCurrency = fromCurrency || "GBP";
+  const targetCurrency = toCurrency || "NGN";
+
   if (!amount || typeof amount !== "number" || amount <= 0) {
     return res.status(400).json({
       message: "Invalid amount provided. Amount must be a positive number.",
@@ -55,8 +58,8 @@ export const requestBankTransfer = async (req: Request, res: Response) => {
     const { accountDetails, transferReference } = await createBankTransfer({
       userId,
       amount,
-      fromCurrency: fromCurrency || "GBP",
-      toCurrency: toCurrency || "NGN",
+      fromCurrency: sourceCurrency,
+      toCurrency: targetCurrency,
       recipientBankName,
       recipientAccountNumber,
       recipientFullName,
@@ -67,20 +70,49 @@ export const requestBankTransfer = async (req: Request, res: Response) => {
       isRecipientBusinessAccount,
     });
 
-    res.status(201).json({
-      message:
-        "Transfer instruction created successfully. Please use the details below to make your GBP payment.",
-      transferReference: transferReference,
-      GBP_Payment_Details: {
+    let paymentDetailsKey: string;
+    let paymentDetails: any;
+    let paymentCurrency: string;
+    let nextStepMessage: string;
+
+    if (sourceCurrency === "NGN" && targetCurrency === "GBP") {
+      paymentDetailsKey = "NGN_Payment_Details";
+      paymentDetails = {
+        NGNBankName: accountDetails?.bankName,
+        NGNAccountNumber: accountDetails?.accountNumber,
+      };
+      paymentCurrency = "NGN";
+
+      nextStepMessage = `Please transfer your NGN amount to the **NGN Payment Details** provided and use your Transfer Reference (${transferReference}) as the payment reference.`;
+    } else if (sourceCurrency === "GBP" && targetCurrency === "NGN") {
+      paymentDetailsKey = "GBP_Payment_Details";
+      paymentDetails = {
         GBPAccountName:
-          accountDetails?.GBPAccountName || "Contact Support for GBP Details",
+          accountDetails?.bankName || "Contact Support for GBP Details",
         GBPAccountNumber:
-          accountDetails?.GBPAccountNumber || "Contact Support for GBP Details",
-      },
-      nextStep: `Please transfer £${amount.toFixed(
+          accountDetails?.accountNumber || "Contact Support for GBP Details",
+      };
+      paymentCurrency = "GBP";
+      nextStepMessage = `Please transfer £${amount.toFixed(
         2
-      )} to the GBP Payment Details provided and use your Transfer Reference (${transferReference}) as the payment reference.`,
-    });
+      )} to the **GBP Payment Details** provided and use your Transfer Reference (${transferReference}) as the payment reference.`;
+    } else {
+      return res.status(500).json({
+        message:
+          "Transfer created, but unsupported currency pair for response generation.",
+        transferReference: transferReference,
+      });
+    }
+
+    const responseBody: any = {
+      message: `Transfer instruction created successfully. Please use the details below to complete your ${paymentCurrency} payment.`,
+      transferReference: transferReference,
+    };
+
+    responseBody[paymentDetailsKey] = paymentDetails;
+    responseBody.nextStep = nextStepMessage;
+
+    res.status(201).json(responseBody);
   } catch (error: any) {
     console.error("Error creating bank transfer:", error.message);
     res.status(500).json({
