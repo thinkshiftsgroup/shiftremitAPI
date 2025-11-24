@@ -78,7 +78,7 @@ export const requestBankTransfer = async (req: Request, res: Response) => {
     if (sourceCurrency === "NGN" && targetCurrency === "GBP") {
       paymentDetailsKey = "NGN_Payment_Details";
       paymentDetails = {
-        NGNBankName: accountDetails?.bankName,
+        NGNAccountName: accountDetails?.bankName,
         NGNAccountNumber: accountDetails?.accountNumber,
       };
       paymentCurrency = "NGN";
