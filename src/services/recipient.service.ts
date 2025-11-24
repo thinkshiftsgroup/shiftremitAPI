@@ -1,5 +1,9 @@
 import prisma from "@config/db";
 import { Recipient as PrismaRecipient } from "@prisma/client";
+import { ActivityLogService } from "./admin/admin.logs.service";
+import { ActivityType } from "@prisma/client";
+
+const activityLogService = new ActivityLogService();
 
 interface RecipientWithRecency extends PrismaRecipient {
   lastTransferDate: Date;
@@ -111,6 +115,18 @@ export const createRecipient = async (
     },
   });
 
+  await activityLogService.logActivity({
+    userId,
+    activityType: ActivityType.RECIPIENT_ADDED,
+    description: `New recipient added: ${newRecipient.recipientFullName}`,
+    resourceType: "Recipient",
+    resourceId: newRecipient.id,
+    metadata: {
+      fullName: newRecipient.recipientFullName,
+      bankName: newRecipient.recipientBankName,
+    },
+  });
+
   return newRecipient;
 };
 
@@ -147,18 +163,43 @@ export const updateRecipient = async (
     },
     data: data,
   });
+
+  await activityLogService.logActivity({
+    userId,
+    activityType: ActivityType.RECIPIENT_UPDATED,
+    description: `Recipient details updated for ${updatedRecipient.recipientFullName}.`,
+    resourceType: "Recipient",
+    resourceId: recipientId,
+    metadata: { updateFields: Object.keys(data), data },
+  });
+
   return updatedRecipient;
 };
+
 export const deleteRecipient = async (
   recipientId: string,
   userId: string
 ): Promise<PrismaRecipient> => {
+  const recipient = await getRecipientById(recipientId, userId);
+  if (!recipient) {
+    throw new Error("Recipient not found or unauthorized.");
+  }
   const deletedRecipient = await prisma.recipient.delete({
     where: {
       id: recipientId,
       userId: userId,
     },
   });
+
+  await activityLogService.logActivity({
+    userId,
+    activityType: ActivityType.RECIPIENT_UPDATED,
+    description: `Recipient deleted: ${recipient.recipientFullName}.`,
+    resourceType: "Recipient",
+    resourceId: recipientId,
+    metadata: { fullName: recipient.recipientFullName },
+  });
+
   return deletedRecipient;
 };
 
