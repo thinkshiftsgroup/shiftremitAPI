@@ -118,7 +118,7 @@ export const resendVerificationCode = async (req: Request, res: Response) => {
 
 export const signIn = async (req: Request, res: Response) => {
   const { email, password } = req.body;
-
+  const ipAddress = req.ip;
   if (!email || !password) {
     return res
       .status(400)
@@ -126,7 +126,11 @@ export const signIn = async (req: Request, res: Response) => {
   }
 
   try {
-    const { user, token } = await authService.loginUser(email, password);
+    const { user, token } = await authService.loginUser(
+      email,
+      password,
+      ipAddress
+    );
     res.status(200).json({ message: "Login successful.", user, token });
   } catch (error: any) {
     res.status(401).json({ message: error.message });

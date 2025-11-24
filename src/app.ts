@@ -21,6 +21,7 @@ import { adminUsersRouter } from "@routes/admin/admin.user.route";
 import { adminDashboardRouter } from "@routes/admin/admin.dashboard.route";
 import { adminKycRouter } from "@routes/admin/admin.kyc.route";
 import { adminNotificationsRouter } from "@routes/admin/admin.notifications.route";
+import adminLogsRouter from "@routes/admin/admin.logs.route";
 const app = express();
 
 const allowedOrigins = [
@@ -36,7 +37,7 @@ const corsOptions = {
   origin: allowedOrigins,
   credentials: true,
 };
-
+app.set("trust proxy", true);
 app.use(helmet());
 app.use(cors(corsOptions));
 app.use(morgan("dev"));
@@ -60,6 +61,7 @@ app.use("/api/admin/users", adminUsersRouter);
 app.use("/api/admin/dashboard", adminDashboardRouter);
 app.use("/api/admin/kyc", adminKycRouter);
 app.use("/api/admin/notifications", adminNotificationsRouter);
+app.use("/api/admin/logs", adminLogsRouter);
 
 app.get("/health", async (req: Request, res: Response) => {
   res.status(200).json({ status: "UP", message: "Service is healthy" });

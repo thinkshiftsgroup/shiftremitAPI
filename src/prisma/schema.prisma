@@ -86,6 +86,7 @@ model User {
   isDeleted               Boolean                 @default(false)
   isBanned                Boolean                 @default(false)
   adminNotifications      AdminNotification[]
+  activityLogs                     UserActivityLog[]
 }
 
 model Biodata {
@@ -377,4 +378,35 @@ model AdminNotification {
   
   createdAt          DateTime       @default(now())
   user               User          @relation(fields: [userId], references: [id])
+}
+
+enum ActivityType {
+  LOGIN
+  LOGOUT
+  PASSWORD_CHANGE
+  PROFILE_UPDATE
+  RECIPIENT_ADDED
+  RECIPIENT_UPDATED
+  TRANSFER_INITIATED
+  TRANSFER_CANCELLED
+  KYC_INDIVIDUAL_SUBMITTED
+  KYC_BUSINESS_SUBMITTED
+  DOC_UPLOAD
+  DOC_STATUS_CHANGE
+  BUSINESS_PROFILE_UPDATE
+  ACCOUNT_SETTINGS_UPDATE
+  ADMIN_ACTION
+}
+
+model UserActivityLog {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @db.ObjectId
+  user User @relation(fields: [userId], references: [id])
+  activityType ActivityType
+  description String
+  metadata Json?
+  ipAddress String?
+  resourceId String?
+  resourceType String?
+  createdAt DateTime @default(now())
 }

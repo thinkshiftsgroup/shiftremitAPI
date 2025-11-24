@@ -7,6 +7,8 @@ import {
   sendVerificationCodeEmail,
   sendPasswordResetCodeEmail,
 } from "../utils/email";
+import { ActivityLogService } from "@services/admin/admin.logs.service";
+const activityLogService = new ActivityLogService();
 
 const getExpiry = (minutes: number): Date => {
   const expiry = new Date();
@@ -242,7 +244,8 @@ export const resendVerificationCode = async (email: string): Promise<void> => {
 
 export const loginUser = async (
   email: string,
-  password: string
+  password: string,
+  ipAddress?: string
 ): Promise<{ user: Omit<User, "password">; token: string }> => {
   const user = await prisma.user.findUnique({
     where: { email },
@@ -271,6 +274,13 @@ export const loginUser = async (
   const token = generateAuthToken(user);
 
   const { password: _, ...userWithBiodata } = user;
+
+  await activityLogService.logActivity({
+    userId: user.id,
+    activityType: "LOGIN",
+    description: "User logged in successfully.",
+    ipAddress: ipAddress,
+  });
 
   return { user: userWithBiodata, token };
 };
@@ -324,6 +334,45 @@ export const resetPassword = async (
       resetPasswordToken: null,
       resetPasswordExpires: null,
     },
+  });
+
+  const { password: _, ...userWithoutPassword } = updatedUser;
+
+  return userWithoutPassword;
+};
+
+// NEW FUNCTION: CHANGE PASSWORD WITH LOGGING
+export const changePassword = async (
+  userId: string,
+  oldPassword: string,
+  newPassword: string
+): Promise<Omit<User, "password">> => {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+
+  if (!user) {
+    throw new Error("User not found.");
+  }
+
+  const isPasswordValid = await bcrypt.compare(oldPassword, user.password);
+
+  if (!isPasswordValid) {
+    throw new Error("Invalid old password.");
+  }
+
+  const newHashedPassword = await bcrypt.hash(newPassword, 10);
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      password: newHashedPassword,
+    },
+  });
+
+  // LOGGING SUCCESSFUL PASSWORD CHANGE
+  await activityLogService.logActivity({
+    userId: user.id,
+    activityType: "PASSWORD_CHANGE",
+    description: "User successfully changed their password.",
   });
 
   const { password: _, ...userWithoutPassword } = updatedUser;
