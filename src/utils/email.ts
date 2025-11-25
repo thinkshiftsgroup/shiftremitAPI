@@ -1,10 +1,12 @@
 import sgMail from "@sendgrid/mail";
-
+import {
+  generateEmailFooter,
+  generateEmailHeader,
+} from "../services/admin/admin.transfers.service";
 sgMail.setApiKey(process.env.SENDGRID_API_KEY || "");
 
 const SENDER_EMAIL = process.env.EMAIL_FROM || "no-reply@shiftremit.com";
-const TRANSFER_EMAIL = process.env.EMAIL_FROM || "support@shiftremit.com";
-
+const ADMIN_SUPPORT_EMAIL = process.env.EMAIL_FROM || "support@shiftremit.com";
 interface SendEmailParams {
   to: string;
   subject: string;
@@ -18,7 +20,7 @@ export const sendEmail = async ({
 }: SendEmailParams): Promise<void> => {
   const msg = {
     to: to,
-    from: TRANSFER_EMAIL,
+    from: ADMIN_SUPPORT_EMAIL,
     subject: subject,
     html: htmlBody,
   };
@@ -43,7 +45,7 @@ export const sendAdminEmail = async ({
 }: SendEmailParams): Promise<void> => {
   const msg = {
     to: to,
-    from: TRANSFER_EMAIL,
+    from: ADMIN_SUPPORT_EMAIL,
     // cc: "office@getprospa.com",
     subject: subject,
     html: htmlBody,
@@ -69,7 +71,7 @@ export const sendTransferEmail = async ({
 }: SendEmailParams): Promise<void> => {
   const msg = {
     to: to,
-    from: TRANSFER_EMAIL,
+    from: ADMIN_SUPPORT_EMAIL,
     subject: subject,
     html: htmlBody,
   };
@@ -177,4 +179,59 @@ export const createRateAlertHtmlBody = (
 </body>
 </html>
 `;
+};
+
+export const generateKYCAdminEmailHtml = (
+  kycType: "Individual" | "Business",
+  userName: string,
+  userId: string
+): string => {
+  const headerHtml = generateEmailHeader();
+  const footerHtml = generateEmailFooter();
+  const BRAND_COLOR = "#813FD6";
+  const ADMIN_LINK = `${process.env.ADMIN_PORTAL_BASE_URL}/admin/customers/${userId}`;
+
+  return `
+    <div style="background-color: #f3f4f6; padding: 20px; min-height: 100vh;">
+      <div style="max-width: 600px; margin: auto; background-color: #ffffff; color: #1f2937; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); overflow: hidden;">
+        
+        <div style="padding: 0 24px; border-bottom: 1px solid #e5e7eb;">
+          ${headerHtml}
+        </div>
+        
+        <div style="padding: 24px 24px 0 24px;">
+            <h2 style="color: black; font-size: 20px; margin-bottom: 20px;">
+              ACTION REQUIRED: New ${kycType} KYC Submitted
+            </h2>
+
+            <p style="margin-top: 0;">Dear Operations Team,</p>
+            <p>A new ${kycType} KYC application has been submitted and is awaiting your review.</p>
+            
+            <div style="border: 1px dashed #ccc; padding: 15px; margin-bottom: 20px; background-color: #f0f8ff;">
+              <h3 style="margin-top: 0; color: ${BRAND_COLOR}; font-size: 16px;">Submission Details</h3>
+              <p style="margin: 4px 0;"><strong>User:</strong> ${userName}</p>
+              <p style="margin: 4px 0;"><strong>User ID:</strong> ${userId}</p>
+              <p style="margin: 4px 0;"><strong>Type:</strong> ${kycType} KYC</p>
+              <p style="margin: 4px 0;"><strong>Submission Date:</strong> ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</p>
+            </div>
+
+            <p style="text-align: center; margin: 30px 0;">
+              <a 
+                href="${ADMIN_LINK}" 
+                style="display: inline-block; padding: 10px 20px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: bold;"
+              >
+                Review ${kycType} KYC Application
+              </a>
+            </p>
+            
+            <p style="margin: 0;">Thank you,</p>
+            <p style="margin: 0;"><strong>ShiftRemit System Alerts</strong></p>
+        </div>
+
+        <div style="padding: 0 24px 24px 24px;">
+            ${footerHtml}
+        </div>
+      </div>
+    </div>
+  `;
 };

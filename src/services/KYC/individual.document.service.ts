@@ -65,7 +65,8 @@ export const uploadAndSaveDocuments = async (
     });
   }
 
-  await notificationHelper.notifyIndividualDocSubmission(userId);
+  await notificationHelper.notifyIndividualDocSubmission(userId, [docType]);
+
   return { message: "Document uploaded and status set to IN_REVIEW.", docUrl };
 };
 
@@ -173,6 +174,14 @@ export const deleteSingleDocument = async (
   await prisma.individualAccountDoc.update({
     where: { userId },
     data: updateData,
+  });
+
+  await notificationHelper.createNotification({
+    userId,
+    type: "INDIVIDUAL_DOC_UPDATED",
+    message: `User deleted the document: ${docType}. The status has been reset to PENDING.`,
+    linkToResource: `/admin/customers/${userId}`,
+    changedDocs: [docType],
   });
 
   return {

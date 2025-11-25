@@ -3,7 +3,8 @@ import { OverallDocStatus, NotificationType } from "@prisma/client";
 import { AdminNotificationHelper } from "@utils/AdminNotificationHelper";
 import { ActivityLogService } from "@services/admin/admin.logs.service";
 import { ActivityType } from "@prisma/client";
-
+import { sendEmail } from "@utils/email";
+import { generateKYCAdminEmailHtml } from "@utils/email";
 const notificationHelper = new AdminNotificationHelper();
 const activityLogService = new ActivityLogService();
 
@@ -93,6 +94,22 @@ export const submitIndividualKYC = async (userId: string) => {
     },
   });
 
+  try {
+    const userName = `${user.firstname} ${user.lastname}`;
+    const subject = `ACTION: New Individual KYC Submitted by ${userName}`;
+    const htmlBody = generateKYCAdminEmailHtml("Individual", userName, userId);
+
+    await sendEmail({
+      to: "support@shiftremit.com",
+      subject,
+      htmlBody,
+    });
+  } catch (emailError) {
+    console.error(
+      "Failed to send admin email for Individual KYC submission:",
+      emailError
+    );
+  }
   await notificationHelper.createNotification({
     userId: userId,
     type: NotificationType.KYC_INDIVIDUAL_SUBMITTED,
@@ -141,6 +158,12 @@ export const submitBusinessKYC = async (userId: string) => {
       countryOfIncorporation: true,
       whatDoesTheBusinessDo: true,
       businessAccountDocs: true,
+      user: {
+        select: {
+          firstname: true,
+          lastname: true,
+        },
+      },
     },
   });
 
@@ -210,6 +233,23 @@ export const submitBusinessKYC = async (userId: string) => {
       submissionDate: true,
     },
   });
+
+  try {
+    const userName = `${businessAccount.user.firstname} ${businessAccount.user.lastname} (Business: ${businessName})`;
+    const subject = `ACTION: New Business KYC Submitted by ${businessName}`;
+    const htmlBody = generateKYCAdminEmailHtml("Business", userName, userId);
+
+    await sendEmail({
+      to: "support@shiftremit.com",
+      subject,
+      htmlBody,
+    });
+  } catch (emailError) {
+    console.error(
+      "Failed to send admin email for Business KYC submission:",
+      emailError
+    );
+  }
 
   await notificationHelper.createNotification({
     userId: userId,

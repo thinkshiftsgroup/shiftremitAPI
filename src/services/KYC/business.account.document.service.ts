@@ -4,6 +4,7 @@ import { DocStatus, OverallDocStatus } from "@prisma/client";
 import prisma from "@config/db";
 import { BusinessAccountDoc } from "@prisma/client";
 import { AdminNotificationHelper } from "@utils/AdminNotificationHelper";
+import { NotificationType } from "@prisma/client";
 
 export const docMapping = {
   businessRegistrationIncorporationCertificate: "registrationCertificateStatus",
@@ -72,7 +73,7 @@ export const uploadAndSaveBusinessDocuments = async (
     });
   }
 
-  await notificationHelper.notifyBusinessDocSubmission(userId);
+  await notificationHelper.notifyBusinessDocSubmission(userId, [docType]);
 
   return { message: "Document uploaded and status set to IN_REVIEW.", docUrl };
 };
@@ -105,6 +106,14 @@ export const removeBusinessDocumentByType = async (
   await prisma.businessAccountDoc.update({
     where: { businessAccountId: businessAccount.id },
     data: updateData,
+  });
+
+  await notificationHelper.createNotification({
+    userId,
+    type: NotificationType.BUSINESS_DOC_UPDATED,
+    message: `User deleted the business document: ${docType}. The status has been reset to PENDING.`,
+    linkToResource: `/admin/customers/${userId}`,
+    changedDocs: [docType],
   });
 
   return {

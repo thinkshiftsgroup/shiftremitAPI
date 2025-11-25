@@ -6,7 +6,6 @@ import {
   PoliticallyExposedPerson,
   BusinessAccount,
   BusinessAccountDoc,
-  DocStatus,
   OverallDocStatus,
   EntityType,
   NotificationType,
@@ -97,17 +96,34 @@ export const updateBusinessAccountFields = async (
     );
   }
 
+  const changedFields: string[] = [];
+  const incomingKeys = Object.keys(data);
+
+  incomingKeys.forEach((key) => {
+    const oldVal = businessAccount[key as keyof BusinessAccount];
+    const newVal = data[key as keyof UpdateBusinessAccountData];
+
+    if (oldVal !== newVal) {
+      changedFields.push(key);
+    }
+  });
+
   const updatedAccount = await prisma.businessAccount.update({
     where: { userId },
     data: data as Prisma.BusinessAccountUpdateInput,
   });
 
-  await notificationHelper.createNotification({
-    userId,
-    type: NotificationType.BUSINESS_PROFILE_UPDATED,
-    message: "Updated Business Account profile fields.",
-    linkToResource: `/admin/customers/${userId}`,
-  });
+  if (changedFields.length > 0) {
+    await notificationHelper.createNotification({
+      userId,
+      type: NotificationType.BUSINESS_PROFILE_UPDATED,
+      message: `Updated Business Account profile fields: ${changedFields.join(
+        ", "
+      )}`,
+      linkToResource: `/admin/customers/${userId}`,
+      changedFields: changedFields,
+    });
+  }
 
   return updatedAccount;
 };
@@ -150,7 +166,17 @@ export const upsertMultipleDirectors = async (
     }
   });
 
-  return Promise.all(upsertPromises);
+  const directors = await Promise.all(upsertPromises);
+
+  await notificationHelper.createNotification({
+    userId,
+    type: NotificationType.BUSINESS_PROFILE_UPDATED,
+    message: "Directors list/details were updated.",
+    linkToResource: `/admin/customers/${userId}`,
+    changedFields: ["directors"],
+  });
+
+  return directors;
 };
 
 export type ShareholderPayloadData = Omit<
@@ -191,7 +217,18 @@ export const upsertMultipleShareholders = async (
     }
   });
 
-  return Promise.all(upsertPromises);
+  const shareholders = await Promise.all(upsertPromises);
+
+  // Notify after upsert completion
+  await notificationHelper.createNotification({
+    userId,
+    type: NotificationType.BUSINESS_PROFILE_UPDATED,
+    message: "Shareholders list/details were updated.",
+    linkToResource: `/admin/customers/${userId}`,
+    changedFields: ["shareholders"],
+  });
+
+  return shareholders;
 };
 
 export type PEPPayloadData = Omit<
@@ -231,7 +268,18 @@ export const upsertMultiplePEPs = async (
     }
   });
 
-  return Promise.all(upsertPromises);
+  const peps = await Promise.all(upsertPromises);
+
+  // Notify after upsert completion
+  await notificationHelper.createNotification({
+    userId,
+    type: NotificationType.BUSINESS_PROFILE_UPDATED,
+    message: "Politically Exposed Persons (PEPs) list/details were updated.",
+    linkToResource: `/admin/customers/${userId}`,
+    changedFields: ["peps"],
+  });
+
+  return peps;
 };
 
 //delete records
@@ -257,9 +305,20 @@ export const deleteDirectorById = async (
     );
   }
 
-  return prisma.director.delete({
+  const deletedDirector = await prisma.director.delete({
     where: { id: directorId },
   });
+
+  // Notify after deletion
+  await notificationHelper.createNotification({
+    userId,
+    type: NotificationType.BUSINESS_PROFILE_UPDATED,
+    message: "A Director record was deleted.",
+    linkToResource: `/admin/customers/${userId}`,
+    changedFields: ["directors"],
+  });
+
+  return deletedDirector;
 };
 
 export const deleteShareholderById = async (
@@ -284,9 +343,20 @@ export const deleteShareholderById = async (
     );
   }
 
-  return prisma.shareholder.delete({
+  const deletedShareholder = await prisma.shareholder.delete({
     where: { id: shareholderId },
   });
+
+  // Notify after deletion
+  await notificationHelper.createNotification({
+    userId,
+    type: NotificationType.BUSINESS_PROFILE_UPDATED,
+    message: "A Shareholder record was deleted.",
+    linkToResource: `/admin/customers/${userId}`,
+    changedFields: ["shareholders"],
+  });
+
+  return deletedShareholder;
 };
 
 export const deletePEPById = async (
@@ -311,7 +381,17 @@ export const deletePEPById = async (
     );
   }
 
-  return prisma.politicallyExposedPerson.delete({
+  const deletedPEP = await prisma.politicallyExposedPerson.delete({
     where: { id: pepId },
   });
+
+  await notificationHelper.createNotification({
+    userId,
+    type: NotificationType.BUSINESS_PROFILE_UPDATED,
+    message: "A PEP record was deleted.",
+    linkToResource: `/admin/customers/${userId}`,
+    changedFields: ["peps"],
+  });
+
+  return deletedPEP;
 };

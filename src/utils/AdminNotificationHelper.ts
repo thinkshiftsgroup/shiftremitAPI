@@ -11,6 +11,8 @@ export interface CreateNotificationInput {
   type: NotificationType;
   message: string;
   linkToResource?: string;
+  changedFields?: string[];
+  changedDocs?: string[];
 }
 
 export class AdminNotificationHelper {
@@ -23,31 +25,37 @@ export class AdminNotificationHelper {
         type: data.type,
         message: data.message,
         linkToResource: data.linkToResource,
+        changedFields: data.changedFields,
+        changedDocs: data.changedDocs,
       },
     });
   }
 
   public async notifyIndividualDocSubmission(
-    userId: string
+    userId: string,
+    changedDocs: string[]
   ): Promise<AdminNotification> {
     return this.createNotification({
       userId,
       type: NotificationType.INDIVIDUAL_DOC_UPDATED,
       message:
         "A user has submitted or updated an Individual document for review.",
-      linkToResource: `/admin/users/${userId}/individual-docs`,
+      linkToResource: `/admin/customers/${userId}`,
+      changedDocs,
     });
   }
 
   public async notifyBusinessDocSubmission(
-    userId: string
+    userId: string,
+    changedDocs: string[]
   ): Promise<AdminNotification> {
     return this.createNotification({
       userId,
       type: NotificationType.BUSINESS_DOC_UPDATED,
       message:
         "A user has submitted or updated a Business document for review.",
-      linkToResource: `/admin/users/${userId}/business-docs`,
+      linkToResource: `/admin/customers/${userId}`,
+      changedDocs,
     });
   }
 }

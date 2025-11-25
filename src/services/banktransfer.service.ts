@@ -343,12 +343,12 @@ export const createBankTransfer = async (
     });
   }
 
-  await notificationHelper.createNotification({
-    userId: input.userId,
-    type: NotificationType.TRANSFER,
-    message: `New PENDING transfer created (Ref: ${transferReference}) from ${input.fromCurrency} to ${input.toCurrency} for ${input.amount}.`,
-    linkToResource: `/admin/transactions`,
-  });
+  // await notificationHelper.createNotification({
+  //   userId: input.userId,
+  //   type: NotificationType.TRANSFER,
+  //   message: `New PENDING transfer created (Ref: ${transferReference}) from ${input.fromCurrency} to ${input.toCurrency} for ${input.amount}.`,
+  //   linkToResource: `/admin/transactions`,
+  // });
 
   return { accountDetails: finalAccountDetails, transferReference };
 };

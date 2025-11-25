@@ -29,7 +29,6 @@ export const getAdminNotifications = async (req: Request, res: Response) => {
       pageSize,
       usernameFilter,
       countryFilter,
-      isDismissed,
       notificationTypeFilter,
     } = req.query;
 
@@ -40,12 +39,6 @@ export const getAdminNotifications = async (req: Request, res: Response) => {
       usernameFilter: usernameFilter as string,
       countryFilter: countryFilter as string,
       notificationTypeFilter: typeFilter,
-      isDismissed:
-        isDismissed === "true"
-          ? true
-          : isDismissed === "false"
-          ? false
-          : undefined,
     };
 
     const { notifications, totalCount } =

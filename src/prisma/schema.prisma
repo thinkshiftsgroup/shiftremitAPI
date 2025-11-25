@@ -366,20 +366,22 @@ model BusinessKYC {
 }
 
 model AdminNotification {
-  id                 String          @id @default(auto()) @map("_id") @db.ObjectId
-  
-  userId             String          @db.ObjectId
-  type               NotificationType
-  message            String
-  linkToResource     String?
-  
-  isRead             Boolean       @default(false)
-  isDismissed        Boolean       @default(false)
-  
-  createdAt          DateTime       @default(now())
-  user               User          @relation(fields: [userId], references: [id])
+  id               String           @id @default(auto()) @map("_id") @db.ObjectId
+  
+  userId           String           @db.ObjectId
+  type             NotificationType
+  message          String
+  linkToResource   String?
+  
+  changedFields    Json?
+  changedDocs      Json?
+  
+  isRead           Boolean          @default(false)
+  isDismissed      Boolean          @default(false)
+  
+  createdAt        DateTime         @default(now())
+  user             User             @relation(fields: [userId], references: [id])
 }
-
 enum ActivityType {
   LOGIN
   LOGOUT

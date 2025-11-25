@@ -31,7 +31,10 @@ export class AdminNotificationService {
     const skip = (page - 1) * pageSize;
 
     const whereClause: any = {
-      isDismissed: isDismissed,
+      isDismissed: false,
+      type: {
+        notIn: [NotificationType.TRANSFER, NotificationType.TRANSFER_FAILED],
+      },
     };
 
     if (usernameFilter) {
@@ -56,6 +59,13 @@ export class AdminNotificationService {
     if (notificationTypeFilter) {
       whereClause.type = notificationTypeFilter;
     }
+
+    if (isDismissed !== undefined) {
+      whereClause.isDismissed = isDismissed;
+    } else {
+      whereClause.isDismissed = false;
+    }
+
     const [notifications, totalCount] = await prisma.$transaction([
       prisma.adminNotification.findMany({
         where: whereClause,
@@ -86,12 +96,33 @@ export class AdminNotificationService {
   }
 
   public async markAsRead(id: string): Promise<AdminNotification | null> {
+    const notification = await prisma.adminNotification.findUnique({
+      where: { id },
+      select: { type: true },
+    });
+
+    if (!notification) {
+      return null;
+    }
+
+    const data: { isRead: true; isDismissed?: boolean } = {
+      isRead: true,
+    };
+
+    if (
+      notification.type === NotificationType.TRANSFER ||
+      notification.type === NotificationType.BUSINESS_PROFILE_UPDATED ||
+      notification.type === NotificationType.USER_PROFILE_UPDATED ||
+      notification.type === NotificationType.TRANSFER_FAILED
+    ) {
+      data.isDismissed = true;
+    }
+
     return prisma.adminNotification.update({
       where: { id },
-      data: { isRead: true },
+      data: data,
     });
   }
-
   public async getUnreadCount(): Promise<number> {
     return prisma.adminNotification.count({
       where: {
