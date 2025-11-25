@@ -8,8 +8,13 @@ import {
   OverallDocStatus,
   BusinessAccountDoc,
   BusinessAccount,
+  AdminNotification,
+  PoliticallyExposedPerson,
+  Director,
+  BusinessKYC,
+  Shareholder,
 } from "@prisma/client";
-
+import { markAdminNotificationsAsDismissed } from "@utils/AdminNotificationHelper";
 const prisma = new PrismaClient();
 
 export interface DetailedUser extends User {
@@ -18,8 +23,19 @@ export interface DetailedUser extends User {
   lastTransaction: BankTransfer | null;
 }
 
-export interface UserWithDocs extends User {
+interface UserWithDocs extends User {
   individualAccountDoc: IndividualAccountDoc | null;
+  kycSubmission: IndividualKYC | null;
+  businessAccount:
+    | (BusinessAccount & {
+        businessAccountDocs: BusinessAccountDoc | null;
+        shareholders: Shareholder[];
+        directors: Director[];
+        peps: PoliticallyExposedPerson[];
+        kycSubmission: BusinessKYC | null;
+      })
+    | null;
+  adminNotifications: AdminNotification[];
 }
 
 export interface UserQueryOptions {
@@ -295,6 +311,15 @@ export const getUserWithDocs = async (
           kycSubmission: true,
         },
       },
+      adminNotifications: {
+        where: {
+          isDismissed: false,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 50,
+      },
     },
   });
 
@@ -360,6 +385,9 @@ export const updateIndividualDocStatus = async (
       overallStatus: newOverallStatus,
     },
   });
+  if (updatedDoc) {
+    await markAdminNotificationsAsDismissed(userId, docType);
+  }
 
   return updatedDoc;
 };
@@ -413,6 +441,14 @@ export const updateBusinessDocStatus = async (
       overallStatus: newOverallStatus,
     },
   });
+  const businessAccount = await prisma.businessAccount.findUnique({
+    where: { id: businessAccountId },
+    select: { userId: true },
+  });
+
+  if (updatedDoc && businessAccount) {
+    await markAdminNotificationsAsDismissed(businessAccount.userId, docType);
+  }
 
   return updatedDoc;
 };

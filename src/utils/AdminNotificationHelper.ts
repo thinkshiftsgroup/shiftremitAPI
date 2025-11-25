@@ -6,6 +6,21 @@ import {
 
 const prisma = new PrismaClient();
 
+type DocType =
+  | "recentProofOfAddress"
+  | "recentSelfieWithID"
+  | "proofOfValidID"
+  | "proofOfValidIDBackView"
+  | "recentBankStatement"
+  | "additionalDocuments";
+
+type BusinessDocType =
+  | "businessRegistrationIncorporationCertificate"
+  | "articleOfAssociation"
+  | "operatingBusinessUtilityBill"
+  | "companyStatusReports"
+  | "additionalDocument";
+
 export interface CreateNotificationInput {
   userId: string;
   type: NotificationType;
@@ -59,3 +74,43 @@ export class AdminNotificationHelper {
     });
   }
 }
+
+export const markAdminNotificationsAsDismissed = async (
+  userId: string,
+  docType: DocType | BusinessDocType
+) => {
+  const notificationTypeMap: Record<
+    DocType | BusinessDocType,
+    NotificationType
+  > = {
+    recentProofOfAddress: NotificationType.INDIVIDUAL_DOC_UPDATED,
+    recentSelfieWithID: NotificationType.INDIVIDUAL_DOC_UPDATED,
+    proofOfValidID: NotificationType.INDIVIDUAL_DOC_UPDATED,
+    proofOfValidIDBackView: NotificationType.INDIVIDUAL_DOC_UPDATED,
+    recentBankStatement: NotificationType.INDIVIDUAL_DOC_UPDATED,
+    additionalDocuments: NotificationType.INDIVIDUAL_DOC_UPDATED,
+    businessRegistrationIncorporationCertificate:
+      NotificationType.BUSINESS_DOC_UPDATED,
+    articleOfAssociation: NotificationType.BUSINESS_DOC_UPDATED,
+    operatingBusinessUtilityBill: NotificationType.BUSINESS_DOC_UPDATED,
+    companyStatusReports: NotificationType.BUSINESS_DOC_UPDATED,
+    additionalDocument: NotificationType.BUSINESS_DOC_UPDATED,
+  };
+
+  const notificationType = notificationTypeMap[docType];
+
+  if (!notificationType) return;
+
+  await prisma.adminNotification.updateMany({
+    where: {
+      userId: userId,
+      type: notificationType,
+      isDismissed: false,
+      isRead: false,
+    },
+    data: {
+      isDismissed: true,
+      isRead: true,
+    },
+  });
+};

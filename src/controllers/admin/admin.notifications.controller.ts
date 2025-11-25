@@ -99,3 +99,20 @@ export const markNotificationAsDismissed = async (
       .json({ message: "Failed to mark notification as dismissed" });
   }
 };
+export const deleteAllAdminNotifications = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const count = await adminNotificationService.deleteAllNotifications();
+
+    res.status(200).json({
+      message: `Successfully deleted ${count} admin notifications`,
+      deletedCount: count,
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Failed to delete all admin notifications" });
+  }
+};

@@ -126,7 +126,7 @@ export class AdminNotificationService {
   public async getUnreadCount(): Promise<number> {
     return prisma.adminNotification.count({
       where: {
-        isRead: false,
+        //   isRead: false,
         isDismissed: false,
       },
     });
@@ -140,5 +140,9 @@ export class AdminNotificationService {
         isRead: true,
       },
     });
+  }
+  public async deleteAllNotifications(): Promise<number> {
+    const result = await prisma.adminNotification.deleteMany({});
+    return result.count;
   }
 }
