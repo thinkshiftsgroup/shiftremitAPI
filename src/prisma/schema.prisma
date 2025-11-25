@@ -373,8 +373,8 @@ model AdminNotification {
   message          String
   linkToResource   String?
   
-  changedFields    Json?
-  changedDocs      Json?
+  changedFields    String[]
+  changedDocs String[]
   
   isRead           Boolean          @default(false)
   isDismissed      Boolean          @default(false)

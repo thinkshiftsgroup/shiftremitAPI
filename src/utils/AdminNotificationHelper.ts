@@ -112,8 +112,8 @@ export const markAdminNotificationsAsDismissed = async (
       isDismissed: false,
       isRead: false,
       changedDocs: {
-        array_contains: docType,
-      } as any,
+        has: docType,
+      },
     },
     data: {
       isDismissed: true,
