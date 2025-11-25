@@ -97,6 +97,10 @@ export const markAdminNotificationsAsDismissed = async (
     additionalDocument: NotificationType.BUSINESS_DOC_UPDATED,
   };
 
+  const changedDocsFilter = {
+    path: "docType",
+    equals: docType,
+  };
   const notificationType = notificationTypeMap[docType];
 
   if (!notificationType) return;
@@ -107,6 +111,9 @@ export const markAdminNotificationsAsDismissed = async (
       type: notificationType,
       isDismissed: false,
       isRead: false,
+      changedDocs: {
+        array_contains: docType,
+      } as any,
     },
     data: {
       isDismissed: true,
