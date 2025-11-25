@@ -347,7 +347,6 @@ export const deleteShareholderById = async (
     where: { id: shareholderId },
   });
 
-  // Notify after deletion
   await notificationHelper.createNotification({
     userId,
     type: NotificationType.BUSINESS_PROFILE_UPDATED,
