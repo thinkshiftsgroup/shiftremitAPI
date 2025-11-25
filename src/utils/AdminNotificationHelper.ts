@@ -74,7 +74,6 @@ export class AdminNotificationHelper {
     });
   }
 }
-
 export const markAdminNotificationsAsDismissed = async (
   userId: string,
   docType: DocType | BusinessDocType
@@ -97,27 +96,30 @@ export const markAdminNotificationsAsDismissed = async (
     additionalDocument: NotificationType.BUSINESS_DOC_UPDATED,
   };
 
-  const changedDocsFilter = {
-    path: "docType",
-    equals: docType,
-  };
   const notificationType = notificationTypeMap[docType];
 
   if (!notificationType) return;
 
-  await prisma.adminNotification.updateMany({
-    where: {
-      userId: userId,
-      type: notificationType,
-      isDismissed: false,
-      isRead: false,
-      changedDocs: {
-        has: docType,
-      },
+  const whereClause = {
+    userId: userId,
+    type: notificationType,
+    isDismissed: false,
+    changedDocs: {
+      has: docType,
     },
+  };
+
+  console.log("Attempting to dismiss notifications with WHERE:", whereClause);
+
+  const result = await prisma.adminNotification.updateMany({
+    where: whereClause,
     data: {
       isDismissed: true,
       isRead: true,
     },
   });
+
+  console.log("Prisma update result:", result);
+
+  return result;
 };
