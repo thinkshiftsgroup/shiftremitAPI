@@ -15,6 +15,7 @@ import {
   Shareholder,
 } from "@prisma/client";
 import { markAdminNotificationsAsDismissed } from "@utils/AdminNotificationHelper";
+import { sendEmail, generateDocStatusUpdateEmailHtml } from "@utils/email";
 const prisma = new PrismaClient();
 
 export interface DetailedUser extends User {
@@ -384,11 +385,47 @@ export const updateIndividualDocStatus = async (
       [docStatusField]: status,
       overallStatus: newOverallStatus,
     },
+    include: {
+      user: {
+        select: {
+          email: true,
+          fullName: true,
+        },
+      },
+    },
   });
   if (updatedDoc) {
     await markAdminNotificationsAsDismissed(userId, docType);
-  }
 
+    if (status === DocStatus.APPROVED || status === DocStatus.REJECTED) {
+      const userEmail = updatedDoc.user.email;
+      const userName = updatedDoc.user.fullName;
+      const docStatus = status === DocStatus.APPROVED ? "APPROVED" : "REJECTED";
+      const subject =
+        docStatus === "APPROVED"
+          ? `Document Approved: ${docType}`
+          : `Document Rejected: Action Required for ${docType}`;
+
+      const rejectionReason =
+        docStatus === "REJECTED"
+          ? "Please check your account for specific reasons and re-upload the document."
+          : undefined;
+
+      const htmlBody = generateDocStatusUpdateEmailHtml(
+        userName,
+        docType,
+        docStatus,
+        "Individual",
+        rejectionReason
+      );
+
+      await sendEmail({
+        to: userEmail,
+        subject: subject,
+        htmlBody: htmlBody,
+      });
+    }
+  }
   return updatedDoc;
 };
 
@@ -443,11 +480,48 @@ export const updateBusinessDocStatus = async (
   });
   const businessAccount = await prisma.businessAccount.findUnique({
     where: { id: businessAccountId },
-    select: { userId: true },
+    select: {
+      userId: true,
+      businessName: true,
+      user: {
+        select: {
+          email: true,
+          fullName: true,
+        },
+      },
+    },
   });
 
   if (updatedDoc && businessAccount) {
     await markAdminNotificationsAsDismissed(businessAccount.userId, docType);
+    if (status === DocStatus.APPROVED || status === DocStatus.REJECTED) {
+      const userEmail = businessAccount.user.email;
+      const userName = businessAccount.user.fullName;
+      const docStatus = status === DocStatus.APPROVED ? "APPROVED" : "REJECTED";
+      const subject =
+        docStatus === "APPROVED"
+          ? `Document Approved: ${docType}`
+          : `Document Rejected: Action Required for ${docType}`;
+
+      const rejectionReason =
+        docStatus === "REJECTED"
+          ? "Please check your account for specific reasons and re-upload the document."
+          : undefined;
+
+      const htmlBody = generateDocStatusUpdateEmailHtml(
+        userName,
+        docType,
+        docStatus,
+        "Business",
+        rejectionReason
+      );
+
+      await sendEmail({
+        to: userEmail,
+        subject: subject,
+        htmlBody: htmlBody,
+      });
+    }
   }
 
   return updatedDoc;
