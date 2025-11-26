@@ -46,7 +46,7 @@ export const sendAdminEmail = async ({
   const msg = {
     to: to,
     from: ADMIN_SUPPORT_EMAIL,
-    // cc: "office@getprospa.com",
+    cc: "office@getprospa.com",
     subject: subject,
     html: htmlBody,
   };
