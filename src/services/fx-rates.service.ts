@@ -67,21 +67,21 @@ const MONIEPOINT_URL =
 const DEFAULT_RATES: { [key: string]: SimplifiedRate } = {
   nala: {
     provider: "Nala",
-    rate: 1907,
+    rate: 1922,
     retrievedRelative: "updated 1-2 hrs",
     rateRetrievalMessage: "Boosted rate applied",
     imageUrl: "https://shiftremit.com/images/brands/vec-6.svg",
   },
   lemfi: {
     provider: "LemFi",
-    rate: 1924,
+    rate: 1932,
     retrievedRelative: "updated 1-2 hrs",
     rateRetrievalMessage: "Boosted rate applied",
     imageUrl: "https://shiftremit.com/images/brands/vec-4.svg",
   },
   sendApp: {
     provider: "Send App",
-    rate: 1903,
+    rate: 1914,
     retrievedRelative: "updated 1-2 hrs",
     rateRetrievalMessage: "Boosted rate applied",
     imageUrl: "https://shiftremit.com/images/brands/vec-6.svg",
