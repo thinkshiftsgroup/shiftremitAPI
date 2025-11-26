@@ -8,6 +8,7 @@ import {
   BusinessAccountDoc,
   BusinessAccount,
 } from "@prisma/client";
+import { sendEmail, generateKYCUserEmailHtml } from "@utils/email";
 
 export type IndividualKYCSubmission = Omit<IndividualKYC, "userId"> & {
   user: {
@@ -33,8 +34,6 @@ export type BusinessKYCSubmission = Omit<BusinessKYC, "businessAccountId"> & {
   };
   documents: BusinessAccountDoc | null;
 };
-
-// --- Business KYC Service Functions ---
 
 export const listBusinessKYCSubmissions = async (): Promise<
   BusinessKYCSubmission[]
@@ -81,7 +80,17 @@ export const approveBusinessKYC = async (
 ): Promise<BusinessKYC> => {
   const kycSubmission = await prisma.businessKYC.findUnique({
     where: { id: kycId },
-    select: { id: true, businessAccountId: true, status: true },
+    select: {
+      id: true,
+      businessAccountId: true,
+      status: true,
+      businessAccount: {
+        select: {
+          user: { select: { email: true, fullName: true } },
+          businessName: true,
+        },
+      },
+    },
   });
 
   if (!kycSubmission) {
@@ -92,26 +101,6 @@ export const approveBusinessKYC = async (
     return prisma.businessKYC.findUniqueOrThrow({ where: { id: kycId } });
   }
 
-  // const docUpdateData: any = {
-  //   registrationCertificateStatus: DocStatus.APPROVED,
-  //   articleOfAssociationStatus: DocStatus.APPROVED,
-  //   utilityBillStatus: DocStatus.APPROVED,
-  //   companyStatusReportsStatus: DocStatus.APPROVED,
-  //   additionalDocumentStatus: DocStatus.APPROVED,
-  //   overallStatus: OverallDocStatus.APPROVED,
-  // };
-
-  // const docRecord = await prisma.businessAccountDoc.findUnique({
-  //   where: { businessAccountId: kycSubmission.businessAccountId },
-  // });
-
-  // if (docRecord) {
-  //   await prisma.businessAccountDoc.update({
-  //     where: { id: docRecord.id },
-  //     data: docUpdateData,
-  //   });
-  // }
-
   const updatedKYC = await prisma.businessKYC.update({
     where: { id: kycId },
     data: {
@@ -119,15 +108,36 @@ export const approveBusinessKYC = async (
     },
   });
 
+  const userEmail = kycSubmission.businessAccount.user.email;
+  const userName = kycSubmission.businessAccount.user.fullName;
+  const htmlBody = generateKYCUserEmailHtml("Business", "APPROVED", userName);
+
+  await sendEmail({
+    to: userEmail,
+    subject: `KYC Approved: ${kycSubmission.businessAccount.businessName}`,
+    htmlBody: htmlBody,
+  });
+
   return updatedKYC;
 };
 
 export const rejectBusinessKYC = async (
-  kycId: string
+  kycId: string,
+  rejectionReason?: string
 ): Promise<BusinessKYC> => {
   const kycSubmission = await prisma.businessKYC.findUnique({
     where: { id: kycId },
-    select: { id: true, businessAccountId: true, status: true },
+    select: {
+      id: true,
+      businessAccountId: true,
+      status: true,
+      businessAccount: {
+        select: {
+          user: { select: { email: true, fullName: true } },
+          businessName: true,
+        },
+      },
+    },
   });
 
   if (!kycSubmission) {
@@ -138,26 +148,6 @@ export const rejectBusinessKYC = async (
     return prisma.businessKYC.findUniqueOrThrow({ where: { id: kycId } });
   }
 
-  // const docUpdateData: any = {
-  //   registrationCertificateStatus: DocStatus.REJECTED,
-  //   articleOfAssociationStatus: DocStatus.REJECTED,
-  //   utilityBillStatus: DocStatus.REJECTED,
-  //   companyStatusReportsStatus: DocStatus.REJECTED,
-  //   additionalDocumentStatus: DocStatus.REJECTED,
-  //   overallStatus: OverallDocStatus.REJECTED,
-  // };
-
-  // const docRecord = await prisma.businessAccountDoc.findUnique({
-  //   where: { businessAccountId: kycSubmission.businessAccountId },
-  // });
-
-  // if (docRecord) {
-  //   await prisma.businessAccountDoc.update({
-  //     where: { id: docRecord.id },
-  //     data: docUpdateData,
-  //   });
-  // }
-
   const updatedKYC = await prisma.businessKYC.update({
     where: { id: kycId },
     data: {
@@ -165,10 +155,23 @@ export const rejectBusinessKYC = async (
     },
   });
 
+  const userEmail = kycSubmission.businessAccount.user.email;
+  const userName = kycSubmission.businessAccount.user.fullName;
+  const htmlBody = generateKYCUserEmailHtml(
+    "Business",
+    "REJECTED",
+    userName,
+    rejectionReason
+  );
+
+  await sendEmail({
+    to: userEmail,
+    subject: `KYC Rejected: Action Required for ${kycSubmission.businessAccount.businessName}`,
+    htmlBody: htmlBody,
+  });
+
   return updatedKYC;
 };
-
-// --- Individual KYC Service Functions ---
 
 export const listIndividualKYCSubmissions = async (): Promise<
   IndividualKYCSubmission[]
@@ -205,7 +208,12 @@ export const approveIndividualKYC = async (
 ): Promise<IndividualKYC> => {
   const kycSubmission = await prisma.individualKYC.findUnique({
     where: { id: kycId },
-    select: { id: true, userId: true, status: true },
+    select: {
+      id: true,
+      userId: true,
+      status: true,
+      user: { select: { email: true, fullName: true } },
+    },
   });
 
   if (!kycSubmission) {
@@ -216,27 +224,6 @@ export const approveIndividualKYC = async (
     return prisma.individualKYC.findUniqueOrThrow({ where: { id: kycId } });
   }
 
-  // const docUpdateData: any = {
-  //   recentProofOfAddressStatus: DocStatus.APPROVED,
-  //   recentSelfieWithIDStatus: DocStatus.APPROVED,
-  //   proofOfValidIDStatus: DocStatus.APPROVED,
-  //   proofOfValidIDBackViewStatus: DocStatus.APPROVED,
-  //   recentBankStatementStatus: DocStatus.APPROVED,
-  //   additionalDocumentsStatus: DocStatus.APPROVED,
-  //   overallStatus: OverallDocStatus.APPROVED,
-  // };
-
-  // const docRecord = await prisma.individualAccountDoc.findUnique({
-  //   where: { userId: kycSubmission.userId },
-  // });
-
-  // if (docRecord) {
-  //   await prisma.individualAccountDoc.update({
-  //     where: { id: docRecord.id },
-  //     data: docUpdateData,
-  //   });
-  // }
-
   const updatedKYC = await prisma.individualKYC.update({
     where: { id: kycId },
     data: {
@@ -244,15 +231,31 @@ export const approveIndividualKYC = async (
     },
   });
 
+  const userEmail = kycSubmission.user.email;
+  const userName = kycSubmission.user.fullName;
+  const htmlBody = generateKYCUserEmailHtml("Individual", "APPROVED", userName);
+
+  await sendEmail({
+    to: userEmail,
+    subject: `KYC Approved: Full Access Granted`,
+    htmlBody: htmlBody,
+  });
+
   return updatedKYC;
 };
 
 export const rejectIndividualKYC = async (
-  kycId: string
+  kycId: string,
+  rejectionReason?: string
 ): Promise<IndividualKYC> => {
   const kycSubmission = await prisma.individualKYC.findUnique({
     where: { id: kycId },
-    select: { id: true, userId: true, status: true },
+    select: {
+      id: true,
+      userId: true,
+      status: true,
+      user: { select: { email: true, fullName: true } },
+    },
   });
 
   if (!kycSubmission) {
@@ -263,32 +266,26 @@ export const rejectIndividualKYC = async (
     return prisma.individualKYC.findUniqueOrThrow({ where: { id: kycId } });
   }
 
-  // const docUpdateData: any = {
-  //   recentProofOfAddressStatus: DocStatus.REJECTED,
-  //   recentSelfieWithIDStatus: DocStatus.REJECTED,
-  //   proofOfValidIDStatus: DocStatus.REJECTED,
-  //   proofOfValidIDBackViewStatus: DocStatus.REJECTED,
-  //   recentBankStatementStatus: DocStatus.REJECTED,
-  //   additionalDocumentsStatus: DocStatus.REJECTED,
-  //   overallStatus: OverallDocStatus.REJECTED,
-  // };
-
-  // const docRecord = await prisma.individualAccountDoc.findUnique({
-  //   where: { userId: kycSubmission.userId },
-  // });
-
-  // if (docRecord) {
-  //   await prisma.individualAccountDoc.update({
-  //     where: { id: docRecord.id },
-  //     data: docUpdateData,
-  //   });
-  // }
-
   const updatedKYC = await prisma.individualKYC.update({
     where: { id: kycId },
     data: {
       status: OverallDocStatus.REJECTED,
     },
+  });
+
+  const userEmail = kycSubmission.user.email;
+  const userName = kycSubmission.user.fullName;
+  const htmlBody = generateKYCUserEmailHtml(
+    "Individual",
+    "REJECTED",
+    userName,
+    rejectionReason
+  );
+
+  await sendEmail({
+    to: userEmail,
+    subject: `KYC Rejected: Action Required`,
+    htmlBody: htmlBody,
   });
 
   return updatedKYC;

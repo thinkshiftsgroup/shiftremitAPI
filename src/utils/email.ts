@@ -235,3 +235,76 @@ export const generateKYCAdminEmailHtml = (
     </div>
   `;
 };
+
+const BRAND_COLOR = "#813FD6";
+export const generateKYCUserEmailHtml = (
+  kycType: "Individual" | "Business",
+  status: "APPROVED" | "REJECTED",
+  userName: string,
+  reason?: string
+): string => {
+  const headerHtml = generateEmailHeader();
+  const footerHtml = generateEmailFooter();
+
+  const isApproved = status === "APPROVED";
+  const statusColor = isApproved ? "#10B981" : "#EF4444";
+  const titleText = isApproved
+    ? `Congratulations! Your ${kycType} KYC is Approved.`
+    : `Update: Your ${kycType} KYC Requires Attention.`;
+  const bodyText = isApproved
+    ? `We are pleased to inform you that your ${kycType} Know Your Customer (KYC) application has been **successfully approved**. You now have full access to our platform features.`
+    : `We have reviewed your ${kycType} Know Your Customer (KYC) application. Unfortunately, we were unable to approve it at this time. Please review the details below.`;
+
+  const actionText = isApproved
+    ? "Go to Your Account"
+    : "Review and Resubmit Documents";
+  const actionLink = `${process.env.APP_BASE_URL}/account`;
+
+  return `
+    <div style="background-color: #f3f4f6; padding: 20px; min-height: 100vh;">
+      <div style="max-width: 600px; margin: auto; background-color: #ffffff; color: #1f2937; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); overflow: hidden;">
+        
+        <div style="padding: 0 24px; border-bottom: 1px solid #e5e7eb;">
+          ${headerHtml}
+        </div>
+        
+        <div style="padding: 24px;">
+            <h2 style="color: ${statusColor}; font-size: 20px; margin-bottom: 20px;">
+              ${titleText}
+            </h2>
+
+            <p style="margin-top: 0;">Dear ${userName},</p>
+            <p>${bodyText}</p>
+            
+            ${
+              !isApproved && reason
+                ? `
+              <div style="border: 1px dashed ${statusColor}; padding: 15px; margin-bottom: 20px; background-color: #fef2f2;">
+                <h3 style="margin-top: 0; color: ${statusColor}; font-size: 16px;">Rejection Details</h3>
+                <p style="margin: 4px 0;"><strong>Reason:</strong> ${reason}</p>
+                <p style="margin: 4px 0;">Please log into your account to see which specific documents were rejected and upload the corrected files.</p>
+              </div>
+            `
+                : ""
+            }
+
+            <p style="text-align: center; margin: 30px 0;">
+              <a 
+                href="${actionLink}" 
+                style="display: inline-block; padding: 10px 20px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: bold;"
+              >
+                ${actionText}
+              </a>
+            </p>
+            
+            <p style="margin: 0;">Thank you,</p>
+            <p style="margin: 0;"><strong>ShiftRemit Team</strong></p>
+        </div>
+
+        <div style="padding: 0 24px 24px 24px;">
+            ${footerHtml}
+        </div>
+      </div>
+    </div>
+  `;
+};
